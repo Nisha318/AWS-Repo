@@ -25,7 +25,7 @@ graph TD
 
     classDef mgmt fill:#1d4ed8,color:#fff,stroke:#0f172a,stroke-width:2px;
     classDef member fill:#0ea5e9,color:#fff,stroke:#0f172a,stroke-width:2px;
-
+```
 ## ⚙️ Implementation Steps
 
 ### 1. Create the AWS Organization
