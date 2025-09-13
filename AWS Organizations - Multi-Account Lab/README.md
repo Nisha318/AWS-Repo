@@ -145,7 +145,7 @@ Control	Description
 | PL-8    | CCI-002450 | Security architecture: Implements multi-account isolation                |
 
 
-See the full mapping in rmf-mapping.md
+See the full mapping in [rmf-mapping.md](https://github.com/Nisha318/AWS-Repo/blob/main/AWS%20Organizations%20-%20Multi-Account%20Lab/rmf-mapping.md)
 
 
 📝 Notes
