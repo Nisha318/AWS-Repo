@@ -53,25 +53,82 @@ graph TD
 
 ```
 
-4. Test Role Switching
+### 4. Test Role Switching
 
-Log in as an IAM user in the Management account
+- Log in as an IAM user in the Management account  
+- Switch into the `OrganizationAccountAccessRole` for the Prod account  
+- Switch into the `OrganizationAccountAccessRole` for the Dev account  
+- Confirm you can switch back to your Management IAM user session
 
-Switch into the OrganizationAccountAccessRole for the Prod account
+---
+## ⚡ Step 5 – Enable CloudTrail for Organization-Wide Logging
 
-Switch into the OrganizationAccountAccessRole for the Dev account
+This step configures **centralized CloudTrail logging** from your Management account to capture all activity across your AWS Organization, including cross-account role assumption events.
 
-Confirm you can switch back to your Management IAM user session
+---
 
-##📜 Verification
+### 🎯 Objective
 
-Capture CloudTrail logs showing AssumeRole and SwitchRole events
+- Collect audit logs from all accounts (Management, Production, Development)
+- Record `AssumeRole` and `SwitchRole` events to demonstrate access accountability
+- Satisfy **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)** requirements
 
-Save screenshots of successful role switching
+---
 
-Document IAM trust policies used
+### 🛠️ Implementation Steps
 
-##🛡️ Security & RMF Control Mapping
+1. **Sign in to the Management Account**
+   - Use your IAM user or root credentials for the Management account.
+
+2. **Create an Organization Trail**
+   - Open **CloudTrail → Trails → Create trail**
+   - Name the trail: `org-cloudtrail`
+   - Apply trail to **organization**
+   - Choose **Create a new S3 bucket** or select an existing centralized logging bucket
+   - Enable:
+     - **Management events** (Read/Write)
+     - **Data events** (optional but recommended later)
+     - **Insights events** (optional)
+
+3. **Enable Log File Validation**
+   - On the same page, enable log file validation to ensure logs are tamper-evident.
+
+4. **Verify in Member Accounts**
+   - Log in to the Production and Development accounts
+   - Go to **CloudTrail → Trails**
+   - Confirm `org-cloudtrail` appears as an organization-level trail and is delivering logs
+
+5. **Generate Events**
+   - Switch from the Management account into the Production and Development accounts using your `OrganizationAccountAccessRole`
+   - Wait a few minutes, then return to CloudTrail in the Management account
+   - Filter for `AssumeRole` events to confirm they are logged
+
+---
+
+### 📎 Evidence to Capture
+
+- Screenshot of the `org-cloudtrail` trail showing it is applied to the entire Organization
+- Screenshot of CloudTrail `AssumeRole` events from Management to Production and Development
+- Screenshot of the S3 bucket showing CloudTrail log delivery
+
+
+---
+📑 RMF Control Mapping
+Control	CCI	How Satisfied
+AU-2 – Event Logging	CCI-000126	CloudTrail records all management events including AssumeRole
+AU-12 – Audit Record Generation	CCI-001464	CloudTrail automatically generates immutable audit records for cross-account access
+
+---
+
+## 📜 Verification
+
+- Capture CloudTrail logs showing `AssumeRole` and `SwitchRole` events  
+- Save screenshots of successful role switching  
+- Document IAM trust policies used  
+
+---
+
+## 🛡️ Security & RMF Control Mapping
 
 This lab demonstrates alignment to the following NIST SP 800-53 Rev 5 controls:
 
