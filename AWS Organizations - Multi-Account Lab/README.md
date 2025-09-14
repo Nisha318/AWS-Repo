@@ -20,6 +20,20 @@
   <img src="https://img.shields.io/badge/Author-Nisha318-lightgrey" alt="Author Badge">
 </p>
 
+## 🖼️ Architecture Diagram
+
+```mermaid
+graph TD
+    A[👩‍💼 Management Account<br/>AWS-General-Management<br/>394425152055]:::mgmt
+    B[🏭 Production Account<br/>AWS-Production<br/>347948520061<br/>OrganizationAccountAccessRole]:::member
+    C[🧪 Development Account<br/>AWS-Development<br/>914215749281<br/>OrganizationAccountAccessRole]:::member
+
+    A -- sts:AssumeRole --> B
+    A -- sts:AssumeRole --> C
+
+    classDef mgmt fill:#1d4ed8,color:#fff,stroke:#0f172a,stroke-width:2px;
+    classDef member fill:#0ea5e9,color:#fff,stroke:#0f172a,stroke-width:2px;
+```
 ---
 
 ## 📌 Overview
