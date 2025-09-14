@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/header.PNG" 
+  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/header.png" 
        alt="AWS Organizations Architecture Banner" width="70%">
 </p>
 
@@ -24,7 +24,7 @@
 ## 🖼️ Architecture
 
 <p align="center">
-  <img src="./screenshots/organizations-01.png" 
+  <img src="./screenshots/organizations-01.PNG" 
        alt="AWS Organizations Architecture Diagram" width="80%">
   <br>
   <em>Figure 1 — AWS Organizations Multi-Account Architecture</em>
