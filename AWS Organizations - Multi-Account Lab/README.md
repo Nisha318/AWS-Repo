@@ -54,7 +54,7 @@ AWS-Repo/
 ## 🖼️ Architecture
 
 <p align="center">
-  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/organizations-01.PNG" 
+  <img src="https://github.com/Nisha318/AWS-Repo/blob/main/AWS%20Organizations%20-%20Multi-Account%20Lab/screenshots/" 
        alt="AWS Organizations Architecture Diagram"
        width="80%">
   <br>
@@ -78,14 +78,16 @@ AWS-Repo/
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::111122223333:root" },
-      "Action": "sts:AssumeRole"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::394425152055:root"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
 }
 
 ```
@@ -96,6 +98,47 @@ AWS-Repo/
 - Switch into the `OrganizationAccountAccessRole` for the Prod account  
 - Switch into the `OrganizationAccountAccessRole` for the Dev account  
 - Confirm you can switch back to your Management IAM user session
+
+### 📎 Evidence to Capture — Role Switching
+
+**Objective:** Demonstrate successful cross-account access from the Management account into the Production and Development accounts via the `OrganizationAccountAccessRole`.
+
+<p align="center">
+  <img src="./screenshots/role-switch-success-prod.png" 
+       alt="Role Switch Success - Production" width="70%">
+  <br>
+  <em>Figure 2 — Successfully switched from Management into the Production account</em>
+</p>
+
+<p align="center">
+  <img src="./screenshots/role-switch-success-dev.png" 
+       alt="Role Switch Success - Development" width="70%">
+  <br>
+  <em>Figure 3 — Successfully switched from Management into the Development account</em>
+</p>
+
+### 📎 Evidence to Capture — OrganizationAccountAccessRole Trust Policies
+
+**Objective:** Confirm that each member account created an `OrganizationAccountAccessRole` and that its trust policy allows assumption by the Management account.
+
+<p align="center">
+  <img src="./screenshots/role-PROD.png" 
+       alt="Role - Production" width="85%">
+  <img src="./screenshots/role-prod-trust-policy.png" 
+       alt="OrganizationAccountAccessRole Trust Policy - Production" width="85%">
+  <br>
+  <em>Figure 4 — Trust policy in the Production account allows access from the Management account</em>
+</p>
+
+<p align="center">
+  <img src="./screenshots/role-DEV.png" 
+       alt="Role - Development" width="85%">
+  <img src="./screenshots/role-dev-trust-policy.png" 
+       alt="OrganizationAccountAccessRole Trust Policy - Development" width="85%">
+  <br>
+  <em>Figure 5 — Trust policy in the Development account allows access from the Management account</em>
+</p>
+
 
 ---
 
