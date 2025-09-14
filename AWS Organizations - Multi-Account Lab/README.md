@@ -66,14 +66,30 @@ It implements a **Management account**, a **Production account**, and a **Develo
 ## 📁 Repository Structure
 
 ```plaintext
+
 AWS-Repo/
 └── AWS Organizations - Multi-Account Lab/
-    ├── README.md                      # Main lab guide
-    ├── rmf-mapping.md                 # RMF control-to-CCI mapping
-    ├── trust-policies/                # JSON trust policy exports
+    ├── README.md
+    ├── rmf-mapping.md
+    ├── diagrams/
+    │   ├── architecture-banner.png
+    │   └── architecture-diagram.png
+    ├── trust-policies/                     # JSON exports of the IAM role trust policies
     │   ├── management-to-prod.json
     │   └── management-to-dev.json
-    └── screenshots/                   # Evidence screenshots
+    ├── cloudtrail-lake-queries/            # SQL used for evidence
+    │   ├── assume-role-events.sql
+    │   ├── session-issuer.sql
+    │   ├── assume-role-ip-region.sql
+    │   ├── assume-role-access-denied.sql
+    │   └── assume-role-count-by-user.sql
+    ├── query-results/                      # CSV/JSON results saved from CloudTrail Lake
+    │   ├── assume-role-events.csv
+    │   ├── session-issuer.csv
+    │   ├── assume-role-ip-region.csv
+    │   ├── assume-role-access-denied.csv
+    │   └── assume-role-count-by-user.csv
+    └── screenshots/                        # Visual evidence
         ├── aws-console-org-hierarchy.png
         ├── role-prod-trust-policy.png
         ├── role-dev-trust-policy.png
@@ -84,6 +100,7 @@ AWS-Repo/
         ├── cloudtrail-assumerole-events.png
         ├── cloudtrail-lake-query.png
         └── cloudtrail-lake-results.png
+
 
 ```
 
