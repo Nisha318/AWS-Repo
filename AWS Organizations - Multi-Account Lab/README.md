@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/organizations-01.PNG" 
+  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/header.PNG" 
        alt="AWS Organizations Architecture Banner" width="70%">
 </p>
 
@@ -20,20 +20,34 @@
   <img src="https://img.shields.io/badge/Author-Nisha318-lightgrey" alt="Author Badge">
 </p>
 
-## 🖼️ Architecture Diagram
 
-```mermaid
-graph TD
-    A[👩‍💼 Management Account<br/>AWS-General-Management<br/>394425152055]:::mgmt
-    B[🏭 Production Account<br/>AWS-Production<br/>347948520061<br/>OrganizationAccountAccessRole]:::member
-    C[🧪 Development Account<br/>AWS-Development<br/>914215749281<br/>OrganizationAccountAccessRole]:::member
+## 🖼️ Architecture
 
-    A -- sts:AssumeRole --> B
-    A -- sts:AssumeRole --> C
+<p align="center">
+  <img src="./screenshots/organizations-01.png" 
+       alt="AWS Organizations Architecture Diagram" width="80%">
+  <br>
+  <em>Figure 1 — AWS Organizations Multi-Account Architecture</em>
+</p>
 
-    classDef mgmt fill:#1d4ed8,color:#fff,stroke:#0f172a,stroke-width:2px;
-    classDef member fill:#0ea5e9,color:#fff,stroke:#0f172a,stroke-width:2px;
-```
+---
+
+### 📎 Evidence — Organization Hierarchy
+
+**Objective:** Show that the AWS Organization structure includes a Management account and two member accounts (Production and Development), supporting account management and environment isolation.
+
+**Relevant Controls:**  
+- **AC-2 (CCI-000015)** – Account management  
+- **PL-8 (CCI-002450)** – Security architecture  
+
+<p align="center">
+  <img src="./screenshots/aws-console-org-hierarchy.png" 
+       alt="AWS Console - Organization Hierarchy" width="80%">
+  <br>
+  <em>Figure 2 — AWS Console view showing Management, Production, and Development accounts</em>
+</p>
+
+
 ---
 
 ## 📌 Overview
@@ -53,15 +67,23 @@ It implements a **Management account**, a **Production account**, and a **Develo
 ```plaintext
 AWS-Repo/
 └── AWS Organizations - Multi-Account Lab/
-    ├── README.md                  # This lab guide
-    ├── rmf-mapping.md              # Control mapping to NIST SP 800-53 Rev 5 CCIs
-    ├── trust-policies/
+    ├── README.md                      # Main lab guide
+    ├── rmf-mapping.md                 # RMF control-to-CCI mapping
+    ├── trust-policies/                # JSON trust policy exports
     │   ├── management-to-prod.json
     │   └── management-to-dev.json
-    └── screenshots/
-        ├── organizations-01.PNG   # Architecture diagram
-        ├── role-switch-success.png
-        └── cloudtrail-assumerole.png
+    └── screenshots/                   # Evidence screenshots
+        ├── aws-console-org-hierarchy.png
+        ├── role-prod-trust-policy.png
+        ├── role-dev-trust-policy.png
+        ├── role-switch-success-prod.png
+        ├── role-switch-success-dev.png
+        ├── cloudtrail-org-trail.png
+        ├── cloudtrail-trail-config.png
+        ├── cloudtrail-assumerole-events.png
+        ├── cloudtrail-lake-query.png
+        └── cloudtrail-lake-results.png
+
 ```
 ---
 
@@ -105,7 +127,7 @@ AWS-Repo/
 }
 
 ```
-
+---
 ### 4. Test Role Switching
 
 - Log in as an IAM user in the Management account  
@@ -158,74 +180,60 @@ AWS-Repo/
 
 ## ⚡ Step 5 – Enable CloudTrail for Organization-Wide Logging
 
-This step configures **centralized CloudTrail logging** from your Management account to capture all activity across your AWS Organization, including cross-account role assumption events.
-
-### 🎯 Objective
+**🎯 Objective**
 
 - Collect audit logs from all accounts (Management, Production, Development)
 - Record `AssumeRole` and `SwitchRole` events to demonstrate access accountability
-- Satisfy **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)** requirements
+- Satisfies **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)**
 
-### 🛠️ Implementation Steps
+**🛠️ Implementation**
 
-1. **Sign in to the Management Account**
-   - Use your IAM user or root credentials for the Management account.
+- **In the Management account**
+  - Go to **CloudTrail → Trails → Create trail**
+  - Name: `org-cloudtrail`
+  - Apply trail to **organization**
+  - Choose a new or existing **S3 bucket** for centralized logging
+  - Enable:
+    - **Management events** (Read/Write)
+    - *(Optional)* Data events
+    - *(Optional)* Insights events
+  - Enable **log file validation**
 
-2. **Create an Organization Trail**
-   - Open **CloudTrail → Trails → Create trail**
-   - Name the trail: `org-cloudtrail`
-   - Apply trail to **organization**
-   - Choose **Create a new S3 bucket** or select an existing centralized logging bucket
-   - Enable:
-     - **Management events** (Read/Write)
-     - **Data events** (optional but recommended later)
-     - **Insights events** (optional)
+- **In the Production and Development accounts**
+  - Go to **CloudTrail → Trails**
+  - Confirm `org-cloudtrail` appears as an organization-level trail
 
-3. **Enable Log File Validation**
-   - On the same page, enable log file validation to ensure logs are tamper-evident.
+- **Generate events**
+  - Switch from the Management account into Prod and Dev using `OrganizationAccountAccessRole`
+  - Wait a few minutes, then return to **CloudTrail → Event history**
+  - Filter for `AssumeRole` events
 
-4. **Verify in Member Accounts**
-   - Log in to the Production and Development accounts
-   - Go to **CloudTrail → Trails**
-   - Confirm `org-cloudtrail` appears as an organization-level trail and is delivering logs
+**📎 Evidence**
 
-5. **Generate Events**
-   - Switch from the Management account into the Production and Development accounts using your `OrganizationAccountAccessRole`
-   - Wait a few minutes, then return to CloudTrail in the Management account
-   - Filter for `AssumeRole` events to confirm they are logged
-
-### 📎 Evidence to Capture
-
-- Screenshot of the `org-cloudtrail` trail showing it is applied to the entire Organization
-- Screenshot of CloudTrail `AssumeRole` events from Management to Production and Development
-- Screenshot of the S3 bucket showing CloudTrail log delivery
+- Screenshot of the `org-cloudtrail` trail applied to the entire organization
+- Screenshot of `AssumeRole` events appearing in CloudTrail
+- Screenshot of CloudTrail log delivery in the centralized S3 bucket
 
 ---
 
 ## 📊 Step 6 – Verify AssumeRole Events Using CloudTrail Lake
 
-This step confirms that your cross-account role switching activity is being logged.  
-You will query the centralized CloudTrail logs to locate `AssumeRole` events from your Management account into your Production and Development accounts.
+**🎯 Objective**
 
-### 🎯 Objective
+- Confirm that cross-account role assumption events are logged centrally
+- Demonstrate auditing and monitoring capabilities
+- Satisfies **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)**
 
-- Validate that `AssumeRole` events are recorded for all cross-account administrative actions  
-- Demonstrate centralized auditing and monitoring  
-- Satisfy **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)** requirements
+**🛠️ Implementation**
 
-### 🛠️ Implementation Steps
-
-1. **Open CloudTrail Lake**
-   - In the Management account, go to **CloudTrail → Lake → Query editor**
-
-2. **Run the SQL Query**
-   - Paste and run the following query to retrieve your `AssumeRole` events:
+- **In the Management account**
+  - Go to **CloudTrail → Lake → Query editor**
+  - Paste and run the SQL query below
 
 ```sql
 SELECT 
   eventTime,
   eventName,
-  userIdentity.principalId,
   userIdentity.arn,
   requestParameters.roleArn,
   sourceIPAddress,
@@ -247,10 +255,45 @@ LIMIT 25;
   - `requestParameters.roleArn` shows your Production and Development `OrganizationAccountAccessRole`
   - Timestamps align with when you switched roles
 
+
+### 📎 Evidence — CloudTrail Lake Query Results
+
+<p align="center">
+  <img src="./screenshots/cloudtrail-lake-query.png" 
+       alt="CloudTrail Lake Query Editor" width="80%">
+  <br>
+  <em>Figure 9 — CloudTrail Lake query used to locate cross-account AssumeRole events</em>
+</p>
+
+<p align="center">
+  <img src="./screenshots/cloudtrail-lake-results.png" 
+       alt="CloudTrail Lake Query Results" width="80%">
+  <br>
+  <em>Figure 10 — Query results showing Management IAM user assuming Prod and Dev roles</em>
+</p>
+
+
+
+
 ### 📎 Evidence to Capture
 
 - Screenshot of the query results showing your Management IAM user assuming the Prod and Dev roles
 - Highlighted fields: `eventTime`, `userIdentity.arn`, and `requestParameters.roleArn`
+
+📎 Evidence Manifest
+
+| Filename                           | Description                                                                    | Supports Control(s) |
+| ---------------------------------- | ------------------------------------------------------------------------------ | ------------------- |
+| `aws-console-org-hierarchy.png`    | AWS Organizations console showing Management, Production, Development accounts | AC-2, PL-8          |
+| `role-prod-trust-policy.png`       | Trust policy for `OrganizationAccountAccessRole` in Production                 | AC-3, AC-6          |
+| `role-dev-trust-policy.png`        | Trust policy for `OrganizationAccountAccessRole` in Development                | AC-3, AC-6          |
+| `role-switch-success-prod.png`     | Switched from Management IAM user into Production account                      | AC-5, AC-6, IA-2    |
+| `role-switch-success-dev.png`      | Switched from Management IAM user into Development account                     | AC-5, AC-6, IA-2    |
+| `cloudtrail-org-trail.png`         | CloudTrail trail `org-cloudtrail` applied org-wide                             | AU-2, AU-12         |
+| `cloudtrail-trail-config.png`      | Trail configuration showing log validation and S3 bucket logging               | AU-2, AU-12         |
+| `cloudtrail-assumerole-events.png` | CloudTrail showing `AssumeRole` events captured                                | AU-2, AU-12         |
+| `cloudtrail-lake-query.png`        | CloudTrail Lake query used to search for AssumeRole events                     | AU-2, AU-12         |
+| `cloudtrail-lake-results.png`      | Query results showing Management IAM user assuming member roles                | AU-2, AU-12         |
 
 
 ## 🛡️ Security & RMF Control Mapping
