@@ -23,6 +23,7 @@
 
 ## 🖼️ Architecture
 
+<!-- Architecture Diagram -->
 <p align="center">
   <img src="./screenshots/organizations-01.PNG" 
        alt="AWS Organizations Architecture Diagram" width="80%">
@@ -85,17 +86,6 @@ AWS-Repo/
         └── cloudtrail-lake-results.png
 
 ```
----
-
-## 🖼️ Architecture
-
-<p align="center">
-  <img src="https://github.com/Nisha318/AWS-Repo/blob/main/AWS%20Organizations%20-%20Multi-Account%20Lab/screenshots/" 
-       alt="AWS Organizations Architecture Diagram"
-       width="80%">
-  <br>
-  <em>Figure 1 — AWS Organizations Multi-Account Architecture</em>
-</p>
 
 ---
 
@@ -135,7 +125,7 @@ AWS-Repo/
 - Switch into the `OrganizationAccountAccessRole` for the Dev account  
 - Confirm you can switch back to your Management IAM user session
 
-### 📎 Evidence to Capture — Role Switching
+### 📎 Evidence — Role Switching
 
 **Objective:** Demonstrate successful cross-account access from the Management account into the Production and Development accounts via the `OrganizationAccountAccessRole`.
 
@@ -143,36 +133,34 @@ AWS-Repo/
   <img src="./screenshots/role-switch-success-prod.png" 
        alt="Role Switch Success - Production" width="70%">
   <br>
-  <em>Figure 2 — Successfully switched from Management into the Production account</em>
+  <em>Figure 3 — Successfully switched from Management IAM user into the Production account</em>
 </p>
 
 <p align="center">
   <img src="./screenshots/role-switch-success-dev.png" 
        alt="Role Switch Success - Development" width="70%">
   <br>
-  <em>Figure 3 — Successfully switched from Management into the Development account</em>
+  <em>Figure 4 — Successfully switched from Management IAM user into the Development account</em>
 </p>
 
-### 📎 Evidence to Capture — OrganizationAccountAccessRole Trust Policies
+---
+
+### 📎 Evidence — OrganizationAccountAccessRole Trust Policies
 
 **Objective:** Confirm that each member account created an `OrganizationAccountAccessRole` and that its trust policy allows assumption by the Management account.
 
 <p align="center">
-  <img src="./screenshots/role-PROD.png" 
-       alt="Role - Production" width="85%">
   <img src="./screenshots/role-prod-trust-policy.png" 
        alt="OrganizationAccountAccessRole Trust Policy - Production" width="85%">
   <br>
-  <em>Figure 4 — Trust policy in the Production account allows access from the Management account</em>
+  <em>Figure 5 — Trust policy in the Production account allows access from the Management account</em>
 </p>
 
 <p align="center">
-  <img src="./screenshots/role-DEV.png" 
-       alt="Role - Development" width="85%">
   <img src="./screenshots/role-dev-trust-policy.png" 
        alt="OrganizationAccountAccessRole Trust Policy - Development" width="85%">
   <br>
-  <em>Figure 5 — Trust policy in the Development account allows access from the Management account</em>
+  <em>Figure 6 — Trust policy in the Development account allows access from the Management account</em>
 </p>
 
 
@@ -208,11 +196,30 @@ AWS-Repo/
   - Wait a few minutes, then return to **CloudTrail → Event history**
   - Filter for `AssumeRole` events
 
-**📎 Evidence**
+### 📎 Evidence — CloudTrail Lake Query Results
 
-- Screenshot of the `org-cloudtrail` trail applied to the entire organization
-- Screenshot of `AssumeRole` events appearing in CloudTrail
-- Screenshot of CloudTrail log delivery in the centralized S3 bucket
+<p align="center">
+  <img src="./screenshots/cloudtrail-org-trail.png" 
+       alt="CloudTrail org-cloudtrail Trail" width="80%">
+  <br>
+  <em>Figure 7 — CloudTrail trail org-cloudtrail applied org-wide</em>
+</p>
+
+<p align="center">
+  <img src="./screenshots/cloudtrail-trail-config.png" 
+       alt="CloudTrail Trail Configuration" width="80%">
+  <br>
+  <em>Figure 8 — Trail configuration showing log validation and S3 bucket logging</em>
+</p>
+
+<p align="center">
+  <img src="./screenshots/cloudtrail-assumerole-events.png" 
+       alt="CloudTrail AssumeRole Events" width="80%">
+  <br>
+  <em>Figure 9 — CloudTrail Event history showing AssumeRole events captured</em>
+</p>
+
+---
 
 ---
 
@@ -248,15 +255,20 @@ ORDER BY eventTime DESC
 LIMIT 25;
 ```
 
-### 3. Review the Results
+**Review the Results**
 
 - Confirm the following appear in your results:
   - `userIdentity.arn` matches your IAM user in the Management account
   - `requestParameters.roleArn` shows your Production and Development `OrganizationAccountAccessRole`
   - Timestamps align with when you switched roles
 
-
 ### 📎 Evidence — CloudTrail Lake Query Results
+
+**Objective:** Demonstrate that cross-account `AssumeRole` activity from the Management account into the Production and Development accounts is logged and queryable using CloudTrail Lake.
+
+**Relevant Controls:**  
+- **AU-2 (CCI-000126)** — Event logging  
+- **AU-12 (CCI-001464)** — Audit record generation  
 
 <p align="center">
   <img src="./screenshots/cloudtrail-lake-query.png" 
@@ -274,26 +286,23 @@ LIMIT 25;
 
 
 
-
-### 📎 Evidence to Capture
-
-- Screenshot of the query results showing your Management IAM user assuming the Prod and Dev roles
-- Highlighted fields: `eventTime`, `userIdentity.arn`, and `requestParameters.roleArn`
-
 📎 Evidence Manifest
 
-| Filename                           | Description                                                                    | Supports Control(s) |
-| ---------------------------------- | ------------------------------------------------------------------------------ | ------------------- |
-| `aws-console-org-hierarchy.png`    | AWS Organizations console showing Management, Production, Development accounts | AC-2, PL-8          |
-| `role-prod-trust-policy.png`       | Trust policy for `OrganizationAccountAccessRole` in Production                 | AC-3, AC-6          |
-| `role-dev-trust-policy.png`        | Trust policy for `OrganizationAccountAccessRole` in Development                | AC-3, AC-6          |
-| `role-switch-success-prod.png`     | Switched from Management IAM user into Production account                      | AC-5, AC-6, IA-2    |
-| `role-switch-success-dev.png`      | Switched from Management IAM user into Development account                     | AC-5, AC-6, IA-2    |
-| `cloudtrail-org-trail.png`         | CloudTrail trail `org-cloudtrail` applied org-wide                             | AU-2, AU-12         |
-| `cloudtrail-trail-config.png`      | Trail configuration showing log validation and S3 bucket logging               | AU-2, AU-12         |
-| `cloudtrail-assumerole-events.png` | CloudTrail showing `AssumeRole` events captured                                | AU-2, AU-12         |
-| `cloudtrail-lake-query.png`        | CloudTrail Lake query used to search for AssumeRole events                     | AU-2, AU-12         |
-| `cloudtrail-lake-results.png`      | Query results showing Management IAM user assuming member roles                | AU-2, AU-12         |
+| Figure  | Filename                           | Description                                                                     | Supports Control(s) |
+| ------- | ---------------------------------- | ------------------------------------------------------------------------------- | ------------------- |
+| Fig. 1  | `organizations-01.PNG`             | AWS Organizations Multi-Account Architecture diagram                            | PL-8                |
+| Fig. 2  | `aws-console-org-hierarchy.png`    | AWS Organizations console showing Management, Production, Development accounts  | AC-2, PL-8          |
+| Fig. 3  | `role-switch-success-prod.png`     | Switched from Management IAM user into Production account                       | AC-5, AC-6, IA-2    |
+| Fig. 4  | `role-switch-success-dev.png`      | Switched from Management IAM user into Development account                      | AC-5, AC-6, IA-2    |
+| Fig. 5  | `role-prod-trust-policy.png`       | Trust policy for `OrganizationAccountAccessRole` in Production                  | AC-3, AC-6          |
+| Fig. 6  | `role-dev-trust-policy.png`        | Trust policy for `OrganizationAccountAccessRole` in Development                 | AC-3, AC-6          |
+| Fig. 7  | `cloudtrail-org-trail.png`         | CloudTrail trail `org-cloudtrail` applied org-wide                              | AU-2, AU-12         |
+| Fig. 8  | `cloudtrail-trail-config.png`      | Trail configuration showing log validation and S3 bucket logging                | AU-2, AU-12         |
+| Fig. 9  | `cloudtrail-assumerole-events.png` | CloudTrail Event history showing `AssumeRole` events captured                   | AU-2, AU-12         |
+| Fig. 10 | `cloudtrail-lake-query.png`        | CloudTrail Lake query editor with SQL to locate `AssumeRole` events             | AU-2, AU-12         |
+| Fig. 11 | `cloudtrail-lake-results.png`      | CloudTrail Lake query results showing Management IAM user assuming member roles | AU-2, AU-12         |
+
+
 
 
 ## 🛡️ Security & RMF Control Mapping
