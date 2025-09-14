@@ -49,23 +49,28 @@ contribute to RMF compliance requirements.
 
 ## 📊 CloudTrail Lake Evidence Mapping
 
-These queries are optional but provide strong, auditable evidence of the RMF control implementations in this lab.  
-They are located in `cloudtrail-lake-queries/` and their CSV outputs are saved in `query-results/`.
+These CloudTrail Lake queries provide auditable evidence supporting the RMF controls implemented in this lab.  
+They are stored in `cloudtrail-lake-queries/` and their CSV outputs are saved in `query-results/`.
 
-| Query file                                | Purpose / Evidence                                               | RMF Controls (examples)                        |
-|-------------------------------------------|------------------------------------------------------------------|------------------------------------------------|
-| `assume-role-events.sql`                   | Lists all cross-account `AssumeRole` events (who, what, when)     | **AU-2 (CCI-000126)**, **AU-12 (CCI-001464)**  |
-| `session-issuer.sql`                       | Shows which Management IAM user issued the session                | **IA-2 (CCI-000764)**, **AC-6 (CCI-000366)**   |
-| `assume-role-ip-region.sql`                | Shows event IP addresses and AWS Regions                          | **AC-3 (CCI-000213)**, **AU-12 (CCI-001464)**  |
-| `assume-role-access-denied.sql`             | Detects failed `AssumeRole` attempts                              | **AU-2 (CCI-000126)**, **AC-3 (CCI-000213)**   |
-| `assume-role-count-by-user.sql`             | Counts `AssumeRole` events grouped by user                        | **AC-2 (CCI-000015)**, **IA-2 (CCI-000764)**   |
+| Query File                                 | Purpose / Evidence                                               | RMF Controls (Examples)                        |
+|---------------------------------------------|------------------------------------------------------------------|------------------------------------------------|
+| `assume-role-events.sql`                     | Lists all cross-account `AssumeRole` events (who, what, when)     | **AU-2 (CCI-000126)**, **AU-12 (CCI-001464)**  |
+| `session-issuer.sql`                         | Shows which Management IAM user issued the session                | **IA-2 (CCI-000764)**, **AC-6 (CCI-000366)**   |
+| `assume-role-ip-region.sql`                  | Shows event IP addresses and AWS Regions                          | **AC-3 (CCI-000213)**, **AU-12 (CCI-001464)**  |
+| `assume-role-access-denied.sql`               | Detects failed `AssumeRole` attempts                              | **AU-2 (CCI-000126)**, **AC-3 (CCI-000213)**   |
+| `assume-role-count-by-user.sql`               | Counts `AssumeRole` events grouped by user                        | **AC-2 (CCI-000015)**, **IA-2 (CCI-000764)**   |
 
-> **How to run:** In CloudTrail Lake, open **Lake → Query editor**, select your **Event data store**,  
-> paste a query from the folder, and replace the placeholder **Event Data Store ID** with your own  
-> (e.g., `a1108ccd-5700-4d23-9b7f-cfbae7c1308b`). Save results (CSV) into `query-results/` for audit artifacts.
+> **How to run:**  
+> 1. In CloudTrail Lake, open **Lake → Query editor**.  
+> 2. Select your **Event data store**.  
+> 3. Paste a query from the folder and replace the placeholder **Event Data Store ID** with your own  
+>    (e.g., `a1108ccd-5700-4d23-9b7f-cfbae7c1308b`).  
+> 4. Save results (CSV) into `query-results/` for audit artifacts.
 
+---
 
-📎 CloudTrail Lake Evidence Manifest
+## 📎 CloudTrail Lake Evidence Manifest
+
 | Type                | File Path                                               | Description                                                   | Supports Control(s)                                      |
 | ------------------- | ------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
 | SQL Query           | `cloudtrail-lake-queries/assume-role-events.sql`        | Lists all cross-account `AssumeRole` events (who, what, when) | AU-2 (CCI-000126), AU-12 (CCI-001464)                    |
@@ -78,7 +83,6 @@ They are located in `cloudtrail-lake-queries/` and their CSV outputs are saved i
 | Query Results (CSV) | `query-results/assume-role-access-denied.csv`           | Denied cross-account `AssumeRole` attempts                    | AU-2 (CCI-000126), AC-3 (CCI-000213)                     |
 | SQL Query           | `cloudtrail-lake-queries/assume-role-count-by-user.sql` | Counts number of `AssumeRole` events per user                 | AC-2 (CCI-000015), IA-2 (CCI-000764), AU-12 (CCI-001464) |
 | Query Results (CSV) | `query-results/assume-role-count-by-user.csv`           | Role usage frequency per user                                 | AC-2 (CCI-000015), IA-2 (CCI-000764), AU-12 (CCI-001464) |
-
 
 ---
 
