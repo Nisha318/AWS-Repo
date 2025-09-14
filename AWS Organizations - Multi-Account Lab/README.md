@@ -70,9 +70,6 @@ AWS-Repo/
 └── AWS Organizations - Multi-Account Lab/
     ├── README.md
     ├── rmf-mapping.md
-    ├── diagrams/
-    │   ├── architecture-banner.png
-    │   └── architecture-diagram.png
     ├── trust-policies/
     │   ├── management-to-prod.json
     │   └── management-to-dev.json
