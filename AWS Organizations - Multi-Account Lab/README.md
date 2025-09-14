@@ -1,4 +1,26 @@
-# AWS Organizations: Multi-Account Governance Lab
+<p align="center">
+  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/organizations-01.PNG" 
+       alt="AWS Organizations Architecture Banner" width="70%">
+</p>
+
+<h1 align="center">AWS Organizations: Multi-Account Governance Lab</h1>
+
+<p align="center">
+  <strong>Environment Isolation • Centralized Governance • RMF-Aligned Security</strong>
+</p>
+
+<p align="center">
+  <a href="https://aws.amazon.com/organizations/">
+    <img src="https://img.shields.io/badge/AWS-Organizations-orange?logo=amazonaws&logoColor=white" alt="AWS Badge">
+  </a>
+  <a href="https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final">
+    <img src="https://img.shields.io/badge/NIST-SP%20800--53%20Rev%205-blue" alt="NIST 800-53 Badge">
+  </a>
+  <img src="https://img.shields.io/badge/Focus-Security%20Lab-green" alt="Security Lab Badge">
+  <img src="https://img.shields.io/badge/Author-Nisha318-lightgrey" alt="Author Badge">
+</p>
+
+---
 
 ## 📌 Overview
 This lab demonstrates how to build a secure multi-account AWS environment using **AWS Organizations**.  
@@ -12,20 +34,35 @@ It implements a **Management account**, a **Production account**, and a **Develo
 
 ---
 
+## 📁 Repository Structure
+
+```plaintext
+AWS-Repo/
+└── AWS Organizations - Multi-Account Lab/
+    ├── README.md                  # This lab guide
+    ├── rmf-mapping.md              # Control mapping to NIST SP 800-53 Rev 5 CCIs
+    ├── trust-policies/
+    │   ├── management-to-prod.json
+    │   └── management-to-dev.json
+    └── screenshots/
+        ├── organizations-01.PNG   # Architecture diagram
+        ├── role-switch-success.png
+        └── cloudtrail-assumerole.png
+```
+---
+
 ## 🖼️ Architecture
 
-```mermaid
-graph TD
-    A[👩‍💼 Management Account<br/>AWS-General-Management<br/>111122223333]
-    B[🏭 Production Account<br/>AWS-Production<br/>444455556666<br/>OrganizationAccountAccessRole]
-    C[🧪 Development Account<br/>AWS-Development<br/>777788889999<br/>OrganizationAccountAccessRole]
+<p align="center">
+  <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/organizations-01.PNG" 
+       alt="AWS Organizations Architecture Diagram"
+       width="80%">
+  <br>
+  <em>Figure 1 — AWS Organizations Multi-Account Architecture</em>
+</p>
 
-    A -- sts:AssumeRole --> B
-    A -- sts:AssumeRole --> C
+---
 
-    classDef mgmt fill:#1d4ed8,color:#fff,stroke:#0f172a,stroke-width:2px;
-    classDef member fill:#0ea5e9,color:#fff,stroke:#0f172a,stroke-width:2px;
-```
 ## ⚙️ Implementation Steps
 
 ### 1. Create the AWS Organization
@@ -61,19 +98,16 @@ graph TD
 - Confirm you can switch back to your Management IAM user session
 
 ---
+
 ## ⚡ Step 5 – Enable CloudTrail for Organization-Wide Logging
 
 This step configures **centralized CloudTrail logging** from your Management account to capture all activity across your AWS Organization, including cross-account role assumption events.
-
----
 
 ### 🎯 Objective
 
 - Collect audit logs from all accounts (Management, Production, Development)
 - Record `AssumeRole` and `SwitchRole` events to demonstrate access accountability
 - Satisfy **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)** requirements
-
----
 
 ### 🛠️ Implementation Steps
 
@@ -103,49 +137,79 @@ This step configures **centralized CloudTrail logging** from your Management acc
    - Wait a few minutes, then return to CloudTrail in the Management account
    - Filter for `AssumeRole` events to confirm they are logged
 
----
-
 ### 📎 Evidence to Capture
 
 - Screenshot of the `org-cloudtrail` trail showing it is applied to the entire Organization
 - Screenshot of CloudTrail `AssumeRole` events from Management to Production and Development
 - Screenshot of the S3 bucket showing CloudTrail log delivery
 
-
----
-📑 RMF Control Mapping
-Control	CCI	How Satisfied
-AU-2 – Event Logging	CCI-000126	CloudTrail records all management events including AssumeRole
-AU-12 – Audit Record Generation	CCI-001464	CloudTrail automatically generates immutable audit records for cross-account access
-
 ---
 
-## 📜 Verification
+## 📊 Step 6 – Verify AssumeRole Events Using CloudTrail Lake
 
-- Capture CloudTrail logs showing `AssumeRole` and `SwitchRole` events  
-- Save screenshots of successful role switching  
-- Document IAM trust policies used  
+This step confirms that your cross-account role switching activity is being logged.  
+You will query the centralized CloudTrail logs to locate `AssumeRole` events from your Management account into your Production and Development accounts.
 
----
+### 🎯 Objective
+
+- Validate that `AssumeRole` events are recorded for all cross-account administrative actions  
+- Demonstrate centralized auditing and monitoring  
+- Satisfy **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)** requirements
+
+### 🛠️ Implementation Steps
+
+1. **Open CloudTrail Lake**
+   - In the Management account, go to **CloudTrail → Lake → Query editor**
+
+2. **Run the SQL Query**
+   - Paste and run the following query to retrieve your `AssumeRole` events:
+
+```sql
+SELECT 
+  eventTime,
+  eventName,
+  userIdentity.principalId,
+  userIdentity.arn,
+  requestParameters.roleArn,
+  sourceIPAddress,
+  awsRegion
+FROM 
+  awscloudtraillake
+WHERE 
+  eventSource = 'sts.amazonaws.com'
+  AND eventName = 'AssumeRole'
+  AND requestParameters.roleArn LIKE '%OrganizationAccountAccessRole%'
+ORDER BY eventTime DESC
+LIMIT 25;
+```
+
+### 3. Review the Results
+
+- Confirm the following appear in your results:
+  - `userIdentity.arn` matches your IAM user in the Management account
+  - `requestParameters.roleArn` shows your Production and Development `OrganizationAccountAccessRole`
+  - Timestamps align with when you switched roles
+
+### 📎 Evidence to Capture
+
+- Screenshot of the query results showing your Management IAM user assuming the Prod and Dev roles
+- Highlighted fields: `eventTime`, `userIdentity.arn`, and `requestParameters.roleArn`
+
 
 ## 🛡️ Security & RMF Control Mapping
 
-This lab demonstrates alignment to the following NIST SP 800-53 Rev 5 controls:
+| Control | CCI         | Description                                                              |
+| ------- | ------------| ------------------------------------------------------------------------ |
+| AC-2    | CCI-000015  | Account management: Creates and manages organizational accounts          |
+| AC-3    | CCI-000213  | Access enforcement: Trust policy limits access to the Management account |
+| AC-5    | CCI-000770  | Separation of duties: Isolates environments and admin privileges         |
+| AC-6    | CCI-000366  | Least privilege: Only temporary elevation via role assumption            |
+| IA-2    | CCI-000764  | Identification & authentication: IAM user auth before assuming roles     |
+| AU-2    | CCI-000126  | Event logging: CloudTrail logs all cross-account access events           |
+| AU-12   | CCI-001464  | Audit record generation: CloudTrail generates immutable logs             |
+| PL-8    | CCI-002450  | Security architecture: Implements multi-account isolation                |
 
-Control	Description
-
-| Control | CCI        | Description                                                              |
-| ------- | ---------- | ------------------------------------------------------------------------ |
-| AC-2    | CCI-000015 | Account management: Creates and manages organizational accounts          |
-| AC-3    | CCI-000213 | Access enforcement: Trust policy limits access to the Management account |
-| AC-5    | CCI-000770 | Separation of duties: Isolates environments and admin privileges         |
-| AC-6    | CCI-000366 | Least privilege: Only temporary elevation via role assumption            |
-| IA-2    | CCI-000764 | Identification & authentication: IAM user auth before assuming roles     |
-| AU-2    | CCI-000126 | Event logging: CloudTrail logs all cross-account access events           |
-| PL-8    | CCI-002450 | Security architecture: Implements multi-account isolation                |
-
-
-See the full mapping in [rmf-mapping.md](https://github.com/Nisha318/AWS-Repo/blob/main/AWS%20Organizations%20-%20Multi-Account%20Lab/rmf-mapping.md)
+See the full mapping in [rmf-mapping.md](./rmf-mapping.md)
 
 
 📝 Notes
