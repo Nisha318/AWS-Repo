@@ -272,7 +272,12 @@ AWS-Repo/
 | PL-8    | CCI-002450 | Security architecture: Implements multi-account isolation                |
 
 
-See the full mapping in [rmf-mapping.md](./rmf-mapping.md)
+---
+
+## 📑 Full RMF Control Mapping
+
+For detailed control-to-CCI mappings and how each requirement is satisfied in this lab,  
+see the full [RMF Mapping Document](./rmf-mapping.md).
 
 
 📝 Notes
