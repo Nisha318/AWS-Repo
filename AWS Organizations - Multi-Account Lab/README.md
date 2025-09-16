@@ -65,6 +65,7 @@ It implements a **Management account**, a **Production account**, and a **Develo
 ---
 
 ## 📁 Repository Structure
+> ⚠️ **Note:** The AWS environment (Organization accounts, Trails, and Event Data Store) must be created in your AWS console. These resources are not stored in this repository.
 
 ```plaintext
 AWS-Repo/
@@ -101,7 +102,21 @@ AWS-Repo/
         ├── cloudtrail-lake-query.png
         └── cloudtrail-lake-results.png
 ```
+<details> <summary>💻 Environment Resources (not stored in repo)</summary>
 
+AWS Organization
+
+Management, Production, and Development accounts
+
+CloudTrail
+
+Organization Trail: org-cloudtrail
+
+CloudTrail Lake
+
+Event Data Store: org-event-data-store
+
+</details> ```
 ---
 
 ## ⚙️ Implementation Steps
@@ -205,20 +220,78 @@ The following steps walk through the full implementation of the AWS Organization
   - Filter for `AssumeRole` events
 
 ---
+## ⚡ Step 5.5 – Create CloudTrail Lake Event Data Store
+
+**🎯 Objective**
+
+- Create a CloudTrail Lake Event Data Store (EDS) to collect and query organization-wide events
+- Required for CloudTrail Lake SQL queries in Step 6
+- Satisfies **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)**
+
+**🛠️ Implementation**
+
+- In the **Management account**:
+  1. Go to **CloudTrail → Lake → Event data stores → Create event data store**
+  2. Name it `org-event-data-store`
+  3. Under **Select event source**, choose **CloudTrail events**
+  4. Scope: **Apply to my organization**
+  5. Enable **Ingest future events**
+  6. Enable **Import existing events from trails** to copy historical events from your S3 trail bucket
+  7. Review and **Create event data store**
+
+- Wait until the EDS status changes to **Started**
+
+**📎 Evidence**
+
+- Screenshot of the Event Data Store details page showing:
+  - EDS name
+  - ARN
+  - Status = Started
+  - Scope = Organization
+
+<p align="center">
+  <img src="./screenshots/cloudtrail-event-data-store.png" width="80%">
+  <br>
+  <em>CloudTrail Lake Event Data Store created for organization logs</em>
+</p>
+
+---
 
 ## 📊 Step 6 – Verify AssumeRole Events Using CloudTrail Lake
 
 **🎯 Objective**
 
-- Confirm that cross-account role assumption events are logged centrally
-- Demonstrate auditing and monitoring capabilities
+- Confirm that cross-account role assumption events are logged centrally  
+- Demonstrate auditing and monitoring capabilities  
 - Satisfies **AU-2 (CCI-000126)** and **AU-12 (CCI-001464)**
+
+---
 
 **🛠️ Implementation**
 
-- **In the Management account**
-  - Go to **CloudTrail → Lake → Query editor**
-  - Paste and run your queries from cloudtrail-lake-queries/ (replace EDS ID placeholder)
+- In the **Management account**:
+
+  1. Go to **CloudTrail → Lake → Query editor**
+  2. In the **Event data store** dropdown, select the `org-event-data-store` you created in Step 5.5
+  3. Open a `.sql` file from the `cloudtrail-lake-queries/` directory
+  4. Replace the placeholder **Event Data Store ID** with your actual EDS ID
+  5. Run the query
+  6. Export the results as `.csv` and save them into `query-results/`
+
+**💻 Example Query**
+
+```sql
+SELECT
+  eventTime,
+  userIdentity.arn,
+  requestParameters.roleArn,
+  sourceIPAddress,
+  awsRegion
+FROM a1108ccd-5700-4d23-9b7f-cfbae7c1308b -- replace with your Event Data Store ID
+WHERE eventName = 'AssumeRole'
+ORDER BY eventTime DESC
+LIMIT 25;
+
 
 **Review the Results**
 - `userIdentity.arn` should match your Management IAM user
