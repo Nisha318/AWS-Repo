@@ -18,5 +18,18 @@ in the **Management account (`XXXXXXXX5055`)** to assume the
 
 ---
 
-📌 **Note**  
-These policies were captured directly from the IAM console after role creation and are included as evidence of correct cross-account configuration.
+## 📑 Example Trust Policy (Redacted)
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::XXXXXXXX5055:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
