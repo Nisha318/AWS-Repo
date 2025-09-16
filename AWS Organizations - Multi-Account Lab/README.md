@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/header.png" 
-       alt="AWS Organizations Architecture Banner" width="70%">
+       alt="AWS Organizations Lab Banner" width="70%">
 </p>
 
 <h1 align="center">AWS Organizations: Multi-Account Governance Lab</h1>
@@ -74,7 +74,7 @@ AWS-Repo/
     ├── rmf-mapping.md                     # RMF control-to-CCI mapping
     ├── diagrams/                          # Visual architecture assets
     │   ├── architecture-banner.png
-    │   └── architecture-diagram.png
+    │   └── aws-console-org-hierarchy.png
     ├── trust-policies/                    # JSON exports of IAM role trust policies
     │   ├── management-to-prod.json
     │   └── management-to-dev.json
