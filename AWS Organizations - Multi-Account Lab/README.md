@@ -68,24 +68,27 @@ It implements a **Management account**, a **Production account**, and a **Develo
 ```plaintext
 AWS-Repo/
 └── AWS Organizations - Multi-Account Lab/
-    ├── README.md
-    ├── rmf-mapping.md
-    ├── trust-policies/
+    ├── README.md                          # Main lab guide
+    ├── rmf-mapping.md                     # RMF control-to-CCI mapping
+    ├── diagrams/                          # Visual architecture assets
+    │   ├── architecture-banner.png
+    │   └── architecture-diagram.png
+    ├── trust-policies/                    # JSON exports of IAM role trust policies
     │   ├── management-to-prod.json
     │   └── management-to-dev.json
-    ├── cloudtrail-lake-queries/
+    ├── cloudtrail-lake-queries/            # CloudTrail Lake SQL used for evidence
     │   ├── assume-role-events.sql
     │   ├── session-issuer.sql
     │   ├── assume-role-ip-region.sql
     │   ├── assume-role-access-denied.sql
     │   └── assume-role-count-by-user.sql
-    ├── query-results/
+    ├── query-results/                      # CSV results from CloudTrail Lake (account IDs masked)
     │   ├── assume-role-events.csv
     │   ├── session-issuer.csv
     │   ├── assume-role-ip-region.csv
     │   ├── assume-role-access-denied.csv
     │   └── assume-role-count-by-user.csv
-    └── screenshots/
+    └── screenshots/                        # Visual evidence used in README
         ├── aws-console-org-hierarchy.png
         ├── role-prod-trust-policy.png
         ├── role-dev-trust-policy.png
@@ -101,6 +104,7 @@ AWS-Repo/
 ---
 
 ## ⚙️ Implementation Steps
+The following steps walk through the full implementation of the AWS Organizations lab.
 
 ### 1. Create the AWS Organization
 - Enable AWS Organizations in the Management account
@@ -120,7 +124,7 @@ AWS-Repo/
         {
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::394425152055:root"
+                "AWS": "arn:aws:iam::XXXXXXXX2055:root"
             },
             "Action": "sts:AssumeRole"
         }
@@ -165,7 +169,6 @@ AWS-Repo/
   <br>
   <em>Trust policy in the Development account allows access from the Management account</em>
 </p>
-
 
 
 ---
@@ -222,7 +225,7 @@ AWS-Repo/
 - Timestamps should align with your test events
 
 
-
+#### Visual Evidence
 📎 Evidence Manifest — Visual Screenshots
 | Filename                           | Description                                                                     | Supports Control(s) |
 | ---------------------------------- | ------------------------------------------------------------------------------- | ------------------- |
@@ -238,7 +241,7 @@ AWS-Repo/
 | `cloudtrail-lake-query.png`        | CloudTrail Lake query editor with SQL to locate `AssumeRole` events             | AU-2, AU-12         |
 | `cloudtrail-lake-results.png`      | CloudTrail Lake query results showing Management IAM user assuming member roles | AU-2, AU-12         |
 
-
+#### Query Evidence
 📎 Evidence Manifest — Queries and Results
 | Type                | File Name                                               | Description                                             | Supports Control(s) |
 | ------------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------- |
