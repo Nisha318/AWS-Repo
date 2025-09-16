@@ -17,6 +17,7 @@
     <img src="https://img.shields.io/badge/NIST-SP%20800--53%20Rev%205-blue" alt="NIST 800-53 Badge">
   </a>
   <img src="https://img.shields.io/badge/Focus-Security%20Lab-green" alt="Security Lab Badge">
+ <a href="https://github.com/Nisha318">
   <img src="https://img.shields.io/badge/Author-Nisha318-lightgrey" alt="Author Badge">
 </p>
 
@@ -25,7 +26,7 @@
 
 <!-- Architecture Diagram -->
 <p align="center">
-  <img src="./screenshots/organizations-01.PNG" 
+  <img src="./screenshots/architecture-diagram.png" 
        alt="AWS Organizations Architecture Diagram" width="80%">
   <br>
   <em>AWS Organizations Multi-Account Architecture</em>
