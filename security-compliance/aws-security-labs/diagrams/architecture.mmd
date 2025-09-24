@@ -1,0 +1,14 @@
+```mermaid
+flowchart TB
+  A[User] -->|HTTPS| B[ALB]
+  B --> C[App EC2]
+  C --> D[RDS]
+  subgraph Security
+    E[GuardDuty]
+    F[Security Hub]
+    G[CloudTrail]
+  end
+  C --> G
+  G --> F
+  E --> F
+```
