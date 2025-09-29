@@ -1,1 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Leads — Read-only Listing</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; color:#111; }
+    h1 { font-size: 22px; margin: 0 0 12px; }
+    .meta { color:#555; margin-bottom:16px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #e5e7eb; padding:10px; text-align:left; font-size:14px; vertical-align: top; }
+    th { background:#fafafa; position: sticky; top: 0; }
+    .controls { margin:16px 0; display:flex; gap:12px; align-items:center; }
+    button { padding:10px 14px; border:1px solid #ddd; border-radius:8px; background:#fff; cursor:pointer; }
+    button:hover { background:#f8f9fb; }
+    .pill { display:inline-block; padding:2px 8px; background:#eef2ff; border-radius:999px; font-size:12px; color:#3730a3; }
+    .muted { color:#666; }
+    .nowrap { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <h1>Lead Submissions (read-only)</h1>
+  <div class="meta">
+    <span id="count" class="pill">0</span> rows shown
+  </div>
+
+  <div class="controls">
+    <button id="loadMore" disabled>Load more</button>
+    <span id="status" class="muted"></span>
+  </div>
+
+  <table id="table">
+    <thead>
+      <tr>
+        <th class="nowrap">Created</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Message</th>
+        <th>ID</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API_URL = "https://w6ibd0d18e.execute-api.us-east-1.amazonaws.com/dev/epicreads_resource";
+    const state = { lastKey: null, total: 0, loading: false };
+
+    const tbody = document.querySelector("#table tbody");
+    const loadBtn = document.getElementById("loadMore");
+    const countEl = document.getElementById("count");
+    const statusEl = document.getElementById("status");
+
+    async function fetchPage() {
+      if (state.loading) return;
+      state.loading = true;
+      setStatus("Loading…");
+      loadBtn.disabled = true;
+
+      const params = new URLSearchParams({ limit: "10" });
+      if (state.lastKey) params.set("lastKey", state.lastKey);
+
+      try {
+        const resp = await fetch(`${API_URL}?${params.toString()}`, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+
+        const text = await resp.text(); // loggable even if not JSON
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${text}`);
+        const data = JSON.parse(text);
+
+        for (const r of (data.items || [])) appendRow(r);
+        state.total += (data.count || 0);
+        countEl.textContent = state.total;
+
+        state.lastKey = data.lastKey || null;
+        loadBtn.disabled = !state.lastKey;
+        setStatus(state.lastKey ? "More results available." : "All results loaded.");
+      } catch (err) {
+        console.error("GET failed:", err);
+        setStatus("Failed to load data.");
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    function appendRow(r) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="nowrap">${escapeHtml(r.createdAt || "")}</td>
+        <td>${escapeHtml(r.name || "")}</td>
+        <td>${escapeHtml(r.email || "")}</td>
+        <td>${escapeHtml(r.phone || "")}</td>
+        <td>${escapeHtml(r.message || "")}</td>
+        <td class="muted">${escapeHtml(r.id || "")}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function setStatus(msg) { statusEl.textContent = msg; }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+    // initial load + button
+    loadBtn.addEventListener("click", fetchPage);
+    fetchPage();
+  </script>
+</body>
+</html>
 
