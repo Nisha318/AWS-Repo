@@ -70,6 +70,7 @@ automated-contact-form-aws-serverless/
 │   │   ├── dynamodb-entry.png
 │   │   ├── api-gateway-test.png
 │   │   └── curl-response.png
+|   |   └── contacts-admin-page.png
 │   └── next-steps.md               # Planned improvements (SES domain email, IAM auth, etc.)
 └── README.md
 ```
