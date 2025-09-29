@@ -42,7 +42,10 @@ The result is a hands-off system where leads are captured instantly, stored safe
 - **Lesson:** A serverless-first approach can drastically simplify operations while still providing scalability and integration opportunities (SES emails, analytics, etc.).  
 
 ---
+## Roadmap
+See [Next Steps](./docs/next-steps.md) for planned improvements and production hardening.
 
+---
 ## Repo Structure
 ```plaintext
 automated-contact-form-aws-serverless/
