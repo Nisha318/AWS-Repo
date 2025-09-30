@@ -110,8 +110,10 @@ The screenshot below shows a delivered notification routed to Gmail.
 ---
 
 ## Summary
-The evidence above confirms the system works **end-to-end**:  
-- **Problem:** Manual lead handling risks missed opportunities.  
-- **Approach:** Automate submissions with AWS serverless services.  
-- **Result:** Submissions are instantly stored, emailed, and retrievable.  
-- **Lesson:** Serverless automation reduces operational overhead while ensuring leads are never lost.  
+This project demonstrates an end-to-end automated solution for handling contact form submissions.  
+
+- **Problem:** Businesses often miss or inconsistently track leads when relying on manual email handling.  
+- **Approach:** Built a serverless workflow on AWS that validates and stores submissions in DynamoDB, sends instant notifications through SES, and makes data retrievable via API and an admin page.  
+- **Result:** Every lead is captured, stored, and delivered in real time with no manual effort required.  
+- **Lesson:** Automation with serverless services improves reliability, scalability, and responsiveness while reducing operational overhead.  
+
