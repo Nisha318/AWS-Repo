@@ -9,7 +9,7 @@ Each screenshot demonstrates a stage in the workflow, tied to the Problem → Ap
 Users often fill out contact forms on static sites, but without automation, these submissions may be missed or inconsistently tracked.  
 Here we demonstrate a form submission from the hosted static site.  
 
-![Form Submission](./screenshots/form-submission.png)  
+![Form Submission](./form-submission.png)  
 
 ---
 
@@ -17,7 +17,7 @@ Here we demonstrate a form submission from the hosted static site.
 Our approach ensures every submission is automatically validated and persisted in DynamoDB via the **POST Lambda**.  
 This provides reliable, queryable storage instead of relying on unstructured email inboxes.  
 
-![DynamoDB Entry](./screenshots/dynamodb-entry.png)  
+![DynamoDB Entry](./dynamodb-entry.png)  
 
 ---
 
@@ -34,7 +34,7 @@ curl -i -X POST "https://w6ibd0d18e.execute-api.us-east-1.amazonaws.com/dev/epic
   -H "Content-Type: application/json" \
   -d '{"name":"Final Test User","email":"finaltestuser@example.com","message":"Interested in your work, Nisha!"}'
 ```
-![Curl Post Request](./screenshots/curl-post-request.png) 
+![Curl Post Request](./curl-post-request.png) 
 
 
 **Evidence:**  
@@ -50,8 +50,8 @@ To confirm reliability and observability, the system was tested directly act the
 - The `GET` endpoint successfully returned stored submissions via **cURL**.  
 - API Gateway console testing confirmed the **list_contacts Lambda** integration worked as designed.  
 
-![cURL Response](./screenshots/curl-response.png)  
-![API Gateway Test](./screenshots/api-gateway-test.png) 
+![cURL Response](./curl-response.png)  
+![API Gateway Test](./api-gateway-test.png) 
 
 ---
 
@@ -59,7 +59,7 @@ To confirm reliability and observability, the system was tested directly act the
 To validate lessons learned about accessibility and operational ease, we created an **admin page (contacts.html)** that queries the API to retrieve stored contacts.  
 This allows simple, centralized review of captured leads.  
 
-![Contacts Admin Page](./screenshots/contacts-admin-page.png)  
+![Contacts Admin Page](./contacts-admin-page.png)  
 
 ---
 
@@ -67,7 +67,7 @@ This allows simple, centralized review of captured leads.
 Each submission triggers an **Amazon SES email notification**, ensuring stakeholders are alerted in real time.  
 The screenshot below shows a delivered notification routed to Gmail.  
 
-![SES Email](./screenshots/ses-email.png)  
+![SES Email](./ses-email.png)  
 
 ---
 
