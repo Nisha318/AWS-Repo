@@ -1,3 +1,4 @@
+```
 AWS-repo/
 ├── config-ssm-auto-revoke-sg/
 │   ├── README.md             <- Full Project Narrative (Problem, Approach, RMF/IA Result)
@@ -8,3 +9,4 @@ AWS-repo/
 │   │   └── config-remediation-deploy.yaml  <- Config Rule and Remediation Action definition
 │   └── architecture/
 │       └── diagram.png       <- The image you referenced
+```
