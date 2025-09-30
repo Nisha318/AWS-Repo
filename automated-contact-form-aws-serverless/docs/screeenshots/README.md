@@ -1,7 +1,16 @@
 # Evidence Walkthrough
 
-This section provides evidence that the automated contact form system is fully functional.  
-Each screenshot demonstrates a stage in the workflow, tied to the Problem → Approach → Result → Lesson framework.  
+This walkthrough provides proof that the automated contact form system works **end-to-end**, starting from the public domain and finishing with persistent storage and email notifications. 
+
+The evidence follows the same flow as the architecture:  
+
+1. **Route 53 + CloudFront** deliver the static site securely over HTTPS.  
+2. **S3 static site** hosts the contact form.  
+3. **API Gateway + Lambda** process submissions and return data.  
+4. **DynamoDB** stores leads for reliable tracking.  
+5. **SES** delivers real-time email notifications.  
+
+Each screenshot demonstrates a stage in the workflow, tied to the Problem → Approach → Result → Lesson framework.
 
 ---
 
@@ -70,7 +79,6 @@ The screenshot below shows a delivered notification routed to Gmail.
 ![SES Email](./ses-email.png)  
 
 ---
-
 
 ## Summary
 The evidence above confirms the system works **end-to-end**:  
