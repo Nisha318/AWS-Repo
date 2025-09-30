@@ -14,6 +14,35 @@ Each screenshot demonstrates a stage in the workflow, tied to the Problem → Ap
 
 ---
 
+## 0. Distribution Layer (Context)
+Before demonstrating the workflow, we show how the static site is delivered to end users securely and reliably.
+
+### CloudFront Distribution
+Requests for the site are served through **Amazon CloudFront**, which points to the private S3 bucket as the origin.  
+This provides HTTPS, caching for performance, and hides the bucket from direct public access.
+
+![CloudFront Distribution](./cloudfront-distribution.png)
+
+---
+
+### Route 53 DNS Record
+The custom domain **theepicbooksofnisha.click** is managed in **Amazon Route 53**.  
+An **A/ALIAS record** routes traffic to the CloudFront distribution, ensuring end users always resolve the site correctly.
+
+![Route 53 DNS Record](./route53-dns-record.png)
+
+---
+
+### S3 Bucket with Origin Access
+The static files (HTML, CSS, JS) are stored in an **Amazon S3 bucket**.  
+The bucket does **not** have static website hosting enabled or public access.  
+Instead, it is locked down and only accessible through the CloudFront origin access identity (OAI), enforcing a security-first design.
+
+![S3 Bucket Contents](./s3-bucket.png)
+![S3 Bucket Origin Access](./s3-origin-access.png)
+
+---
+
 ## 1. Form Submission (Problem)
 Users often fill out contact forms on static sites, but without automation, these submissions may be missed or inconsistently tracked.  
 Here we demonstrate a form submission from the hosted static site.  
