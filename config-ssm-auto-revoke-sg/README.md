@@ -1,12 +1,12 @@
 ```
-AWS-repo/
-├── config-ssm-auto-revoke-sg/
-│   ├── README.md             <- Full Project Narrative (Problem, Approach, RMF/IA Result)
-│   ├── ssm-document/
-│   │   └── Revoke-NonCompliant-SGRules.yaml  <- The Python/YAML SSM Automation Logic
-│   ├── cloudformation/
-│   │   ├── config-remediation-iam.yaml     <- IAM Role for SSM
-│   │   └── config-remediation-deploy.yaml  <- Config Rule and Remediation Action definition
-│   └── architecture/
-│       └── diagram.png       <- The image you referenced
+aws-config-ssm-auto-remediation/
+├── README.md            
+├── architecture/        
+├── cloudformation/      
+│   ├── 1-config-rule.yaml
+│   ├── 2-ssm-document.yaml
+│   └── 3-remediation-action.yaml
+├── ssm-document/
+│   └── Revoke-NonCompliant-SGRules.yaml  
+└── scripts/              
 ```
