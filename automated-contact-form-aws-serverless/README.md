@@ -49,6 +49,7 @@ See [Next Steps](./docs/next-steps.md) for planned improvements and production h
 ## Repo Structure
 ```plaintext
 automated-contact-form-aws-serverless/
+├── README.md                       # Main project overview
 ├── lambdas/
 │   ├── contactus/                  # POST Lambda source
 │   │   ├── index.js
@@ -65,12 +66,14 @@ automated-contact-form-aws-serverless/
 ├── architecture/
 │   └── architecture-diagram.png
 ├── docs/
-│   ├── screenshots/                # Collected test evidence
+│   ├── README.md                   # Detailed evidence walkthrough with screenshots
+│   ├── screenshots/                
 │   │   ├── form-submission.png
 │   │   ├── dynamodb-entry.png
 │   │   ├── api-gateway-test.png
-│   │   └── curl-response.png
-|   |   └── contacts-admin-page.png
+│   │   ├── curl-response.png
+│   │   ├── contacts-admin-page.png
+│   │   └── ses-email.png           # SES → Gmail notification
 │   └── next-steps.md               # Planned improvements (SES domain email, IAM auth, etc.)
-└── README.md
+
 ```

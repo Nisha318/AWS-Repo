@@ -1,0 +1,9 @@
+{
+  "name": "epicreads-list-contacts",
+  "version": "1.0.0",
+  "description": "Lambda for listing contact submissions",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1480.0"
+  }
+}
