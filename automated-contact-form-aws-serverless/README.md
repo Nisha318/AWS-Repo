@@ -15,23 +15,30 @@ The result is a hands-off system where leads are captured instantly, stored safe
 ## Architecture
 ![Architecture Diagram](./architecture/architecture-diagram.png)
 
-- **Amazon S3** – Hosts the static website and contact form  
-- **Amazon API Gateway** – Exposes REST endpoints (`POST` for form submissions, `GET` for retrieving contacts)  
+- **Amazon Route 53** – Provides DNS resolution, mapping the custom domain  
+  (`theepicbooksofnisha.click`) to the CloudFront distribution.  
+- **Amazon CloudFront** – Delivers the static site globally with low latency, enforces HTTPS,  
+  and caches assets for performance.  
+- **Amazon S3** – Hosts the static website (contact form and admin page).  
+- **Amazon API Gateway** – Exposes REST endpoints (`POST` for form submissions, `GET` for retrieving contacts).  
 - **AWS Lambda** – Handles form logic  
   - `epicreads_contactus`: POST → validate input, write to DynamoDB, trigger SES email  
   - `epicreads_list_contacts`: GET → fetch submissions from DynamoDB  
-- **Amazon DynamoDB** – Stores contact submissions  
-- **Amazon SES** – Sends notifications (currently routed to Gmail; will be updated to a validated domain identity)  
-- **Amazon CloudWatch** – Provides logging and monitoring  
+- **Amazon DynamoDB** – Stores contact submissions.  
+- **Amazon SES** – Sends email notifications (currently routed to Gmail; will later be updated to a validated domain identity).  
+- **Amazon CloudWatch** – Provides logging and monitoring.  
 
 ---
 
 ## Workflow
-1. **User submits form** on the static website hosted in S3.  
-2. **API Gateway** invokes the appropriate Lambda function.  
-3. **Lambda POST** stores the submission into **DynamoDB** and sends an **SES notification**.  
-4. **Lambda GET** retrieves submissions for admin review.  
-5. **CORS settings** ensure that only the approved website can call the API.  
+1. **User accesses the site** via the custom domain (`theepicbooksofnisha.click`) managed in **Route 53**.  
+2. **CloudFront** serves the static site from **Amazon S3**, enforcing HTTPS and caching assets for fast performance.  
+3. **User submits the contact form** on the static website.  
+4. **API Gateway** receives the request and invokes the appropriate **Lambda function**.  
+5. **Lambda POST (`epicreads_contactus`)** validates input, stores the submission into **DynamoDB**, and triggers an **SES email notification**.  
+6. **Lambda GET (`epicreads_list_contacts`)** retrieves stored submissions for admin review.  
+7. **CORS settings** ensure that only the approved domain (`theepicbooksofnisha.click`) can call the API.  
+8. **CloudWatch Logs** capture activity and provide observability across the workflow.   
 
 ---
 
