@@ -141,10 +141,11 @@ Resources:
   ConfigRemediation:
     Type: 'AWS::Config::RemediationConfiguration'
     Properties:
-      # ... other properties
-      TargetType: Other # <--- Delete or correct this line if it exists
+      # Missing line below caused the error:
+      # ConfigRuleName: !Ref ConfigRule 
+      TargetType: SSM_DOCUMENT
       TargetId: !GetAtt RemediationLambda.Arn
-      TargetType: 'AWS::Config::Resource'
+      Automatic: true
       Automatic: true # Enable auto-remediation (Decisive Action)
       MaximumAutomaticAttempts: 1
       RetryAttemptSeconds: 60
