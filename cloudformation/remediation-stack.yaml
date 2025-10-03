@@ -143,7 +143,8 @@ Resources:
     Properties:
       ConfigRuleName: !Ref ConfigRule # <--- ADDED/UNCOMMENTED THIS CRITICAL LINE
       TargetType: SSM_DOCUMENT
-      TargetId: !GetAtt RemediationLambda.Arn
+      TargetId: !Ref FunctionName 
+      TargetVersion: "$LATEST" 
       Automatic: true # Cleaned up duplicate
       MaximumAutomaticAttempts: 1
       RetryAttemptSeconds: 60
