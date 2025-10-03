@@ -138,17 +138,17 @@ Resources:
       SourceArn: !GetAtt ConfigRule.Arn
 
   # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
-  ConfigRemediation:
-    Type: 'AWS::Config::RemediationConfiguration'
-    Properties:
-      ConfigRuleName: !Ref ConfigRule # <--- ADDED/UNCOMMENTED THIS CRITICAL LINE
-      TargetType: SSM_DOCUMENT
-      TargetId: !GetAtt RemediationLambda.Arn
-      Automatic: true # Cleaned up duplicate
-      MaximumAutomaticAttempts: 1
-      RetryAttemptSeconds: 60
-      Parameters:
-        # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
-        resourceId:
-          ResourceValue:
-            Value: RESOURCE_ID
+  ConfigRemediation:
+    Type: 'AWS::Config::RemediationConfiguration'
+    Properties:
+      ConfigRuleName: !Ref ConfigRule # <--- ADDED/UNCOMMENTED THIS CRITICAL LINE
+      TargetType: SSM_DOCUMENT
+      TargetId: !GetAtt RemediationLambda.Arn
+      Automatic: true # Cleaned up duplicate
+      MaximumAutomaticAttempts: 1
+      RetryAttemptSeconds: 60
+      Parameters:
+# Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
+       resourceId:
+        ResourceValue:
+          Value: RESOURCE_ID
