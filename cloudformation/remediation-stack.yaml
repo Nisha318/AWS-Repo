@@ -111,7 +111,7 @@ Resources:
               except Exception as e:
                   print(f"FATAL ERROR during revocation: {e}")
                   raise
-  # 3. AWS Config Managed Rule (Detection/Auditing - CA-7)
+ # 3. AWS Config Managed Rule (Detection/Auditing - CA-7)
   ConfigRule:
     Type: 'AWS::Config::ConfigRule'
     Properties:
@@ -119,13 +119,13 @@ Resources:
       Description: Flags Security Groups allowing 0.0.0.0/0 or ::/0 ingress on 22 or 3389.
       Source:
         Owner: AWS
-        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # <--- CORRECTED IDENTIFIER
+        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # <--- THIS IS THE CORRECT IDENTIFIER
       Scope:
         ComplianceResourceTypes:
           - 'AWS::EC2::SecurityGroup'
       InputParameters:
-        # This rule flags ports in this list that are open to the world.
-        authorizedTcpPorts: '22,3389'
+        # This parameter defines the high-risk ports the rule should check for 0.0.0.0/0 access.
+        authorizedTcpPorts: '22,3389' 
 
   # 4. Lambda Permission (Allows Config to call the function)
   LambdaInvokePermission:
@@ -137,20 +137,18 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !GetAtt ConfigRule.Arn
 
-    # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
-  ConfigRemediation:
-    Type: 'AWS::Config::RemediationConfiguration'
-    Properties:
-      # Missing line below caused the error:
-      # ConfigRuleName: !Ref ConfigRule 
-      TargetType: SSM_DOCUMENT
-      TargetId: !GetAtt RemediationLambda.Arn
-      Automatic: true
-      Automatic: true # Enable auto-remediation (Decisive Action)
-      MaximumAutomaticAttempts: 1
-      RetryAttemptSeconds: 60
-      Parameters:
-        # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
-        resourceId:
-          ResourceValue:
-            Value: RESOURCE_ID
+  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+  ConfigRemediation:
+    Type: 'AWS::Config::RemediationConfiguration'
+    Properties:
+      ConfigRuleName: !Ref ConfigRule # <--- ADDED/UNCOMMENTED THIS CRITICAL LINE
+      TargetType: SSM_DOCUMENT
+      TargetId: !GetAtt RemediationLambda.Arn
+      Automatic: true # Cleaned up duplicate
+      MaximumAutomaticAttempts: 1
+      RetryAttemptSeconds: 60
+      Parameters:
+        # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
+        resourceId:
+          ResourceValue:
+            Value: RESOURCE_ID
