@@ -141,6 +141,7 @@ Resources:
   VpcSgRemediationConfig: # Using a new logical ID for clarity
     Type: 'AWS::Config::RemediationConfiguration'
     # Optional but recommended policy settings for IaC
+    DependsOn: RemediationLambda
     UpdateReplacePolicy: "Retain"
     DeletionPolicy: "Delete"
     # The LambdaInvokePermission implicitly depends on this, but we'll remove 
