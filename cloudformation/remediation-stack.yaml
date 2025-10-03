@@ -137,19 +137,31 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !GetAtt ConfigRule.Arn
 
-  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
-  ConfigRemediation:
+ # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+  VpcSgRemediationConfig: # Using a new logical ID for clarity
     Type: 'AWS::Config::RemediationConfiguration'
+    # Optional but recommended policy settings for IaC
+    UpdateReplacePolicy: "Retain"
+    DeletionPolicy: "Delete"
+    # The LambdaInvokePermission implicitly depends on this, but we'll remove 
+    # the explicit DependsOn here as CloudFormation handles implicit dependencies well.
+    
     Properties:
-      ConfigRuleName: !Ref ConfigRule # <--- ADDED/UNCOMMENTED THIS CRITICAL LINE
-      TargetType: SSM_DOCUMENT
-      TargetId: !Ref FunctionName 
+      ConfigRuleName: !Ref ConfigRule # Fix 3: REQUIRED property to link to the rule
+      TargetType: SSM_DOCUMENT        # Fix 2: Required due to API constraint for Lambda remediation
+      
+      # FIX 4: Use the Lambda Function Name and $LATEST version, 
+      # which satisfies the API when TargetType is SSM_DOCUMENT
+      TargetId: !Ref FunctionName
       TargetVersion: "$LATEST" 
-      Automatic: true # Cleaned up duplicate
+      
+      Automatic: true
       MaximumAutomaticAttempts: 1
       RetryAttemptSeconds: 60
+      
+      # FIX 4 (YAML Indentation): Parameters block must be structured correctly
       Parameters:
-# Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
+        # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
         resourceId:
           ResourceValue:
             Value: RESOURCE_ID
