@@ -120,7 +120,7 @@ Resources:
       Description: Flags Security Groups allowing 0.0.0.0/0 or ::/0 ingress on 22 or 3389.
       Source:
         Owner: AWS
-        SourceIdentifier: RESTRICTED_COMMON_PORTS # AWS Managed Rule
+        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # AWS Managed Rule
       Scope:
         ComplianceResourceTypes:
           - 'AWS::EC2::SecurityGroup'
