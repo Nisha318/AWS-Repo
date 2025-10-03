@@ -119,7 +119,7 @@ Resources:
       Description: Flags Security Groups allowing 0.0.0.0/0 or ::/0 ingress on 22 or 3389.
       Source:
         Owner: AWS
-        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # <--- THIS IS THE CORRECT IDENTIFIER
+        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS
       Scope:
         ComplianceResourceTypes:
           - 'AWS::EC2::SecurityGroup'
@@ -149,6 +149,6 @@ Resources:
       RetryAttemptSeconds: 60
       Parameters:
 # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
-       resourceId:
-        ResourceValue:
-          Value: RESOURCE_ID
+        resourceId:
+          ResourceValue:
+            Value: RESOURCE_ID
