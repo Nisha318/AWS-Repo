@@ -149,6 +149,6 @@ Resources:
       RetryAttemptSeconds: 60
       Parameters:
         # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
-        resourceId:
+        resourceId:
           ResourceValue:
             Value: RESOURCE_ID
