@@ -124,10 +124,12 @@ Resources:
       Scope:
         ComplianceResourceTypes:
           - 'AWS::EC2::SecurityGroup'
-      InputParameters:
-        # Define the ports that trigger non-compliance
-        restrictedPorts: '22,3389'
-
+    InputParameters:
+        # This parameter is required for VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS
+        # We specify all ports we want the rule to check against for the 0.0.0.0/0 source.
+        # Although the name implies authorization, the rule actually flags ports in this list
+        # that are open to the world (0.0.0.0/0).
+        authorizedTcpPorts: '22,3389' 
   # 4. Lambda Permission (Allows Config to call the function)
   LambdaInvokePermission:
     Type: 'AWS::Lambda::Permission'
