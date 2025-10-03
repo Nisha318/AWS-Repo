@@ -137,13 +137,13 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !GetAtt ConfigRule.Arn
 
-  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+    # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
   ConfigRemediation:
     Type: 'AWS::Config::RemediationConfiguration'
     Properties:
-      ConfigRuleName: !Ref ConfigRule
-      TargetType: Other
-      TargetId: !GetAtt RemediationLambda.Arn # Link to the Lambda ARN
+      # ... other properties
+      TargetType: Other # <--- Delete or correct this line if it exists
+      TargetId: !GetAtt RemediationLambda.Arn
       TargetType: 'AWS::Config::Resource'
       Automatic: true # Enable auto-remediation (Decisive Action)
       MaximumAutomaticAttempts: 1
