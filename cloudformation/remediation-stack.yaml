@@ -126,39 +126,38 @@ Resources:
       InputParameters:
         authorizedTcpPorts: '22,3389' 
 
-  # 4. Lambda Permission (Allows Config to call the function)
-  LambdaInvokePermission:
-    Type: 'AWS::Lambda::Permission'
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref RemediationLambda
-      Principal: 'config.amazonaws.com'
-      SourceAccount: !Ref 'AWS::AccountId'
-      SourceArn: !GetAtt ConfigRule.Arn
-
-  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
-  VpcSgRemediationConfig:
-    Type: 'AWS::Config::RemediationConfiguration'
-    # FIX 5: Explicit dependency to prevent "Could not find SSM document..." error
-    DependsOn: RemediationLambda 
-    
-    UpdateReplacePolicy: "Retain"
-    DeletionPolicy: "Delete"
-    
-    Properties:
-      ConfigRuleName: !Ref ConfigRule # FIX 3: REQUIRED property to link to the rule
-      TargetType: SSM_DOCUMENT        # FIX 2: Required due to API constraint for Lambda remediation
-      
+# 4. Lambda Permission (Allows Config to call the function)
+# LambdaInvokePermission:
+#    Type: 'AWS::Lambda::Permission'
+#    Properties:
+#      Action: 'lambda:InvokeFunction'
+#      FunctionName: !Ref RemediationLambda
+#      Principal: 'config.amazonaws.com'
+#      SourceAccount: !Ref 'AWS::AccountId'
+#     SourceArn: !GetAtt ConfigRule.Arn
+# 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+#  VpcSgRemediationConfig:
+#    Type: 'AWS::Config::RemediationConfiguration'
+#    # FIX 5: Explicit dependency to prevent "Could not find SSM document..." error
+#    DependsOn: RemediationLambda 
+#    
+#    UpdateReplacePolicy: "Retain"
+#    DeletionPolicy: "Delete"
+#    
+#    Properties:
+#      ConfigRuleName: !Ref ConfigRule # FIX 3: REQUIRED property to link to the rule
+#      TargetType: SSM_DOCUMENT        # FIX 2: Required due to API constraint for Lambda remediation
+#      
       # FIX 4: Use the Function Name and $LATEST version, which satisfies the API
-      TargetId: !Ref FunctionName 
-      TargetVersion: "$LATEST" 
+#      TargetId: !Ref FunctionName 
+#      TargetVersion: "$LATEST" 
       
-      Automatic: true
-      MaximumAutomaticAttempts: 1
-      RetryAttemptSeconds: 60
-      
+ #     Automatic: true
+  #    MaximumAutomaticAttempts: 1
+   #   RetryAttemptSeconds: 60
+    #  
       # FIX 4: Ensure correct YAML indentation for the Parameters block
-      Parameters:
-        resourceId:
-          ResourceValue:
-            Value: RESOURCE_ID
+     # Parameters:
+      #  resourceId:
+       #   ResourceValue:
+        #    Value: RESOURCE_ID
