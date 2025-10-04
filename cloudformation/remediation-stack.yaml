@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: RMF Project 1 - Automated remediation for over-permissive EC2 Security Groups (AC-4, SC-7) using AWS Config and Lambda.
+Description: RMF Project 1 - Automated remediation for over-permissive EC2 Security Groups (AC-4, SC-7) using AWS Config, SSM Automation, and Lambda.
 
 Parameters:
   FunctionName:
@@ -8,18 +8,18 @@ Parameters:
     Description: Name for the Lambda function.
 
 Resources:
-  # 1. IAM Role for the Lambda Function (Principle of Least Privilege)
+  # 1) IAM role for Lambda
   LambdaExecutionRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal: { Service: [ lambda.amazonaws.com ] }
-            Action: 'sts:AssumeRole'
+            Action: sts:AssumeRole
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole' # For CloudWatch Logs
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: LambdaEC2RevokerPolicy
           PolicyDocument:
@@ -27,14 +27,13 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  # Required EC2 actions for enforcement
-                  - 'ec2:DescribeSecurityGroups'
-                  - 'ec2:RevokeSecurityGroupIngress'
-                Resource: '*' 
+                  - ec2:DescribeSecurityGroups
+                  - ec2:RevokeSecurityGroupIngress
+                Resource: "*"
 
-  # 2. The Remediation Lambda Function
+  # 2) Remediation Lambda
   RemediationLambda:
-    Type: 'AWS::Lambda::Function'
+    Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Ref FunctionName
       Handler: index.lambda_handler
@@ -42,123 +41,149 @@ Resources:
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        # The Lambda code is placed directly here for simple deployment
         ZipFile: |
           import boto3
           import json
-          
-          ec2_client = boto3.client('ec2')
-          
+
+          ec2 = boto3.client('ec2')
+
           def lambda_handler(event, context):
               print(f"Received event: {json.dumps(event)}")
-              
-              try:
-                  # Config passes the resource ID in the 'resourceId' parameter
-                  sg_id = event['resourceId']
-              except KeyError:
-                  try:
-                      sg_id = event['detail']['resourceId']
-                  except Exception:
-                      print("ERROR: Could not find Security Group ID. Exiting.")
-                      return {'statusCode': 400, 'body': 'Missing Security Group ID'}
 
-              print(f"Processing Security Group: {sg_id}")
-              
-              try:
-                  response = ec2_client.describe_security_groups(GroupIds=[sg_id])
-                  sg_data = response['SecurityGroups'][0]
-              except Exception as e:
-                  print(f"ERROR: Failed to describe SG {sg_id}. Details: {e}")
-                  raise
-          
-              rules_to_revoke = []
-              
-              for permission in sg_data.get('IpPermissions', []):
-                  from_port = permission.get('FromPort')
-                  to_port = permission.get('ToPort')
-                  protocol = permission.get('IpProtocol')
-          
-                  is_high_risk_port = (from_port == 22 and to_port == 22) or \
-                                     (from_port == 3389 and to_port == 3389)
-          
-                  if is_high_risk_port:
-                      for ip_range in permission.get('IpRanges', []):
-                          cidr = ip_range.get('CidrIp')
-                          if cidr in ['0.0.0.0/0', '::/0']:
-                              print(f"FOUND VIOLATION: {protocol}:{from_port}-{to_port} from {cidr}")
-                              rules_to_revoke.append({
-                                  'IpProtocol': protocol,
-                                  'FromPort': from_port,
-                                  'ToPort': to_port,
-                                  'CidrIp': cidr
-                              })
+              sg_id = None
+              if isinstance(event, dict):
+                  sg_id = event.get('resourceId') or event.get('detail', {}).get('resourceId')
+              if not sg_id:
+                  return {"statusCode": 400, "body": "Missing Security Group ID"}
 
-              if not rules_to_revoke:
-                  print("INFO: No non-compliant rules found. Remediation skipped.")
-                  return {'statusCode': 200, 'body': 'Compliance check passed.'}
-          
-              try:
-                  print(f"REVOKING {len(rules_to_revoke)} rule(s) on SG {sg_id}.")
-                  ec2_client.revoke_security_group_ingress(
-                      GroupId=sg_id,
-                      IpPermissions=rules_to_revoke
-                  )
-                  print("SUCCESS: Non-compliant rules revoked. Compliance restored.")
-                  
-                  return {'statusCode': 200, 'body': 'Remediation successful.'}
-                  
-              except Exception as e:
-                  print(f"FATAL ERROR during revocation: {e}")
-                  raise
-      
-  # 3. AWS Config Managed Rule (Detection/Auditing - CA-7)
+              # Describe SG
+              resp = ec2.describe_security_groups(GroupIds=[sg_id])
+              sg = resp['SecurityGroups'][0]
+
+              ip_permissions_to_revoke = []
+
+              for p in sg.get('IpPermissions', []):
+                  proto = p.get('IpProtocol')
+                  from_port = p.get('FromPort')
+                  to_port = p.get('ToPort')
+
+                  high_risk = (from_port == 22 and to_port == 22) or (from_port == 3389 and to_port == 3389)
+                  if not high_risk:
+                      continue
+
+                  # IPv4 ranges
+                  for r in p.get('IpRanges', []):
+                      if r.get('CidrIp') == '0.0.0.0/0':
+                          ip_permissions_to_revoke.append({
+                              'IpProtocol': proto,
+                              'FromPort': from_port,
+                              'ToPort': to_port,
+                              'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                          })
+
+                  # IPv6 ranges
+                  for r6 in p.get('Ipv6Ranges', []):
+                      if r6.get('CidrIpv6') == '::/0':
+                          ip_permissions_to_revoke.append({
+                              'IpProtocol': proto,
+                              'FromPort': from_port,
+                              'ToPort': to_port,
+                              'Ipv6Ranges': [{'CidrIpv6': '::/0'}]
+                          })
+
+              if not ip_permissions_to_revoke:
+                  print("No non-compliant rules found.")
+                  return {"statusCode": 200, "body": "Compliant"}
+
+              ec2.revoke_security_group_ingress(
+                  GroupId=sg_id,
+                  IpPermissions=ip_permissions_to_revoke
+              )
+              print(f"Revoked {len(ip_permissions_to_revoke)} rule(s) on {sg_id}")
+              return {"statusCode": 200, "body": "Remediation successful"}
+
+  # 3) AWS Config managed rule (detection)
   ConfigRule:
-    Type: 'AWS::Config::ConfigRule'
+    Type: AWS::Config::ConfigRule
     Properties:
-      ConfigRuleName: 'Restricted-SSH-RDP-Revoker'
+      ConfigRuleName: Restricted-SSH-RDP-Revoker
       Description: Flags Security Groups allowing 0.0.0.0/0 or ::/0 ingress on 22 or 3389.
       Source:
         Owner: AWS
-        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # FIX 1: Correct Identifier
+        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS
       Scope:
         ComplianceResourceTypes:
-          - 'AWS::EC2::SecurityGroup'
+          - AWS::EC2::SecurityGroup
       InputParameters:
-        authorizedTcpPorts: '22,3389' 
+        authorizedTcpPorts: '22,3389'
 
- # 4. Lambda Permission (Allows Config to call the function)
-  LambdaInvokePermission:
-    Type: 'AWS::Lambda::Permission'
+  # 4) SSM Automation role (assumed by Automation)
+  AutomationRole:
+    Type: AWS::IAM::Role
     Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref RemediationLambda
-      Principal: 'config.amazonaws.com'
-      SourceAccount: !Ref 'AWS::AccountId'
-      SourceArn: !GetAtt ConfigRule.Arn
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ssm.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AutomationPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSecurityGroups
+                  - ec2:RevokeSecurityGroupIngress
+                Resource: "*"
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: "*"
 
-  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+  # 5) SSM Automation document that invokes the Lambda
+  RemediateOpenSgDoc:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: '0.3'
+        description: Invoke Lambda to remediate open SGs on ports 22/3389.
+        assumeRole: "{{ AutomationAssumeRole }}"
+        parameters:
+          SecurityGroupId:
+            type: String
+          AutomationAssumeRole:
+            type: String
+          LambdaFnName:
+            type: String
+        mainSteps:
+          - name: CallLambda
+            action: aws:invokeLambdaFunction
+            inputs:
+              FunctionName: "{{ LambdaFnName }}"
+              Payload: |
+                { "resourceId": "{{ SecurityGroupId }}" }
+
+  # 6) AWS Config remediation configuration pointing to the SSM document
   VpcSgRemediationConfig:
-    Type: 'AWS::Config::RemediationConfiguration'
-    # FIX 5: Explicit dependency to prevent "Could not find SSM document..." error
-    DependsOn: RemediationLambda 
-    
-    UpdateReplacePolicy: "Retain"
-    DeletionPolicy: "Delete"
-    
+    Type: AWS::Config::RemediationConfiguration
+    DependsOn: RemediateOpenSgDoc
     Properties:
-      ConfigRuleName: !Ref ConfigRule # FIX 3: REQUIRED property to link to the rule
-      TargetType: SSM_DOCUMENT        # FIX 2: Required due to API constraint for Lambda remediation
-      
-      # FIX 4: Use the Function Name and $LATEST version, which satisfies the API
-      TargetId: !Ref FunctionName 
-      TargetVersion: "$LATEST" 
-      
+      ConfigRuleName: !Ref ConfigRule
+      TargetType: SSM_DOCUMENT
+      TargetId: !Ref RemediateOpenSgDoc   # SSM document name
+      TargetVersion: "1"                  # first published version
       Automatic: true
       MaximumAutomaticAttempts: 1
       RetryAttemptSeconds: 60
-      
-      # FIX 4: Ensure correct YAML indentation for the Parameters block
       Parameters:
-        resourceId:
+        AutomationAssumeRole:
+          StaticValue:
+            Values: [ !GetAtt AutomationRole.Arn ]
+        SecurityGroupId:
           ResourceValue:
             Value: RESOURCE_ID
+        LambdaFnName:
+          StaticValue:
+            Values: [ !Ref FunctionName ]
