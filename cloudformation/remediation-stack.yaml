@@ -56,7 +56,6 @@ Resources:
                   # Config passes the resource ID in the 'resourceId' parameter
                   sg_id = event['resourceId']
               except KeyError:
-                  # Fallback for Config Rule execution testing/manual events
                   try:
                       sg_id = event['detail']['resourceId']
                   except Exception:
@@ -111,7 +110,8 @@ Resources:
               except Exception as e:
                   print(f"FATAL ERROR during revocation: {e}")
                   raise
- # 3. AWS Config Managed Rule (Detection/Auditing - CA-7)
+      
+  # 3. AWS Config Managed Rule (Detection/Auditing - CA-7)
   ConfigRule:
     Type: 'AWS::Config::ConfigRule'
     Properties:
@@ -119,12 +119,11 @@ Resources:
       Description: Flags Security Groups allowing 0.0.0.0/0 or ::/0 ingress on 22 or 3389.
       Source:
         Owner: AWS
-        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS
+        SourceIdentifier: VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS # FIX 1: Correct Identifier
       Scope:
         ComplianceResourceTypes:
           - 'AWS::EC2::SecurityGroup'
       InputParameters:
-        # This parameter defines the high-risk ports the rule should check for 0.0.0.0/0 access.
         authorizedTcpPorts: '22,3389' 
 
   # 4. Lambda Permission (Allows Config to call the function)
@@ -137,32 +136,29 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
       SourceArn: !GetAtt ConfigRule.Arn
 
- # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
-  VpcSgRemediationConfig: # Using a new logical ID for clarity
+  # 5. AWS Config Remediation Action (Enforcement - AC-4, SC-7)
+  VpcSgRemediationConfig:
     Type: 'AWS::Config::RemediationConfiguration'
-    # Optional but recommended policy settings for IaC
-    DependsOn: RemediationLambda
+    # FIX 5: Explicit dependency to prevent "Could not find SSM document..." error
+    DependsOn: RemediationLambda 
+    
     UpdateReplacePolicy: "Retain"
     DeletionPolicy: "Delete"
-    # The LambdaInvokePermission implicitly depends on this, but we'll remove 
-    # the explicit DependsOn here as CloudFormation handles implicit dependencies well.
     
     Properties:
-      ConfigRuleName: !Ref ConfigRule # Fix 3: REQUIRED property to link to the rule
-      TargetType: SSM_DOCUMENT        # Fix 2: Required due to API constraint for Lambda remediation
+      ConfigRuleName: !Ref ConfigRule # FIX 3: REQUIRED property to link to the rule
+      TargetType: SSM_DOCUMENT        # FIX 2: Required due to API constraint for Lambda remediation
       
-      # FIX 4: Use the Lambda Function Name and $LATEST version, 
-      # which satisfies the API when TargetType is SSM_DOCUMENT
-      TargetId: !Ref FunctionName
+      # FIX 4: Use the Function Name and $LATEST version, which satisfies the API
+      TargetId: !Ref FunctionName 
       TargetVersion: "$LATEST" 
       
       Automatic: true
       MaximumAutomaticAttempts: 1
       RetryAttemptSeconds: 60
       
-      # FIX 4 (YAML Indentation): Parameters block must be structured correctly
+      # FIX 4: Ensure correct YAML indentation for the Parameters block
       Parameters:
-        # Config passes the non-compliant SG ID to the Lambda via the 'resourceId' parameter
         resourceId:
           ResourceValue:
             Value: RESOURCE_ID
