@@ -1,78 +1,105 @@
 import boto3
 import json
+from botocore.exceptions import ClientError
 
-ec2_client = boto3.client('ec2')
+ec2 = boto3.client('ec2')
 
 def lambda_handler(event, context):
     """
-    Handler triggered by AWS Config to revoke non-compliant ingress rules (0.0.0.0/0 on 22/3389).
-    This enforces AC-4 and SC-7 controls.
+    Revoke world-open ingress on SSH (22) and RDP (3389).
+    Works with the SSM Automation payload: {"resourceId": "<sg-id>"}.
     """
-    
-    print(f"Received event: {json.dumps(event)}")
-    
-    # Extract the Security Group ID from the Config event payload
-    try:
-        # Config passes the resource ID in the 'resourceId' parameter
-        sg_id = event['resourceId']
-    except KeyError:
-        # Handle the structure if the event is passed directly (for testing)
-        try:
-            sg_id = event['detail']['resourceId']
-        except Exception:
-            print("ERROR: Could not find Security Group ID. Exiting.")
-            return {'statusCode': 400, 'body': 'Missing Security Group ID'}
 
-    print(f"Processing Security Group: {sg_id}")
-    
-    # 1. Describe the SG to inspect its current rules
+    print(f"Received event: {json.dumps(event)}")
+
+    # Extract Security Group ID
+    sg_id = None
+    if isinstance(event, dict):
+        sg_id = event.get('resourceId') or event.get('detail', {}).get('resourceId')
+    if not sg_id:
+        return {"statusCode": 400, "body": "Missing Security Group ID"}
+
+    # Describe SG
     try:
-        response = ec2_client.describe_security_groups(GroupIds=[sg_id])
-        sg_data = response['SecurityGroups'][0]
-    except Exception as e:
-        print(f"ERROR: Failed to describe SG {sg_id}. Details: {e}")
+        resp = ec2.describe_security_groups(GroupIds=[sg_id])
+        sg = resp["SecurityGroups"][0]
+    except ClientError as e:
+        print(f"DescribeSecurityGroups failed for {sg_id}: {e}")
         raise
 
-    rules_to_revoke = []
-    
-    # 2. Identify the specific non-compliant rules
-    for permission in sg_data.get('IpPermissions', []):
-        from_port = permission.get('FromPort')
-        to_port = permission.get('ToPort')
-        protocol = permission.get('IpProtocol')
+    ip_permissions_to_revoke = []
 
-        # Criteria: SSH (22) or RDP (3389)
-        is_high_risk_port = (from_port == 22 and to_port == 22) or \
-                           (from_port == 3389 and to_port == 3389)
+    for p in sg.get("IpPermissions", []):
+        proto = p.get("IpProtocol")
+        from_port = p.get("FromPort")
+        to_port = p.get("ToPort")
 
-        if is_high_risk_port:
-            for ip_range in permission.get('IpRanges', []):
-                cidr = ip_range.get('CidrIp')
-                # Criteria: Open to the world
-                if cidr in ['0.0.0.0/0', '::/0']:
-                    print(f"FOUND VIOLATION: {protocol}:{from_port}-{to_port} from {cidr}")
-                    rules_to_revoke.append({
-                        'IpProtocol': protocol,
-                        'FromPort': from_port,
-                        'ToPort': to_port,
-                        'CidrIp': cidr
+        # Target only 22 and 3389
+        is_ssh = (from_port == 22 and to_port == 22)
+        is_rdp = (from_port == 3389 and to_port == 3389)
+
+        # Handle rules that allow "all traffic" with IpProtocol = "-1"
+        all_traffic = (proto == "-1")
+        if not (is_ssh or is_rdp or all_traffic):
+            continue
+
+        # IPv4 public
+        for r in p.get("IpRanges", []):
+            if r.get("CidrIp") == "0.0.0.0/0":
+                # If "all traffic", create a precise permission for SSH and RDP
+                if all_traffic:
+                    ip_permissions_to_revoke.extend([
+                        {"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "IpRanges": [{"CidrIp": "0.0.0.0/0"}]},
+                        {"IpProtocol": "tcp", "FromPort": 3389, "ToPort": 3389, "IpRanges": [{"CidrIp": "0.0.0.0/0"}]},
+                    ])
+                else:
+                    ip_permissions_to_revoke.append({
+                        "IpProtocol": proto,
+                        "FromPort": from_port,
+                        "ToPort": to_port,
+                        "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                     })
 
-    if not rules_to_revoke:
-        print("INFO: No non-compliant rules found. Remediation skipped.")
-        return {'statusCode': 200, 'body': 'Compliance check passed.'}
+        # IPv6 public
+        for r6 in p.get("Ipv6Ranges", []):
+            if r6.get("CidrIpv6") == "::/0":
+                if all_traffic:
+                    ip_permissions_to_revoke.extend([
+                        {"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "Ipv6Ranges": [{"CidrIpv6": "::/0"}]},
+                        {"IpProtocol": "tcp", "FromPort": 3389, "ToPort": 3389, "Ipv6Ranges": [{"CidrIpv6": "::/0"}]},
+                    ])
+                else:
+                    ip_permissions_to_revoke.append({
+                        "IpProtocol": proto,
+                        "FromPort": from_port,
+                        "ToPort": to_port,
+                        "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
+                    })
 
-    # 3. Revoke the ingress rules (The Decisive Action)
-    try:
-        print(f"REVOKING {len(rules_to_revoke)} rule(s) on SG {sg_id}.")
-        ec2_client.revoke_security_group_ingress(
-            GroupId=sg_id,
-            IpPermissions=rules_to_revoke
+    if not ip_permissions_to_revoke:
+        print("No non-compliant rules found")
+        return {"statusCode": 200, "body": "Compliant"}
+
+    # Deduplicate permissions to avoid InvalidPermission.Duplicate
+    def key(p):
+        return (
+            p["IpProtocol"],
+            p.get("FromPort"),
+            p.get("ToPort"),
+            tuple(sorted([r.get("CidrIp") for r in p.get("IpRanges", []) if "CidrIp" in r])),
+            tuple(sorted([r.get("CidrIpv6") for r in p.get("Ipv6Ranges", []) if "CidrIpv6" in r])),
         )
-        print("SUCCESS: Non-compliant rules revoked. Compliance restored.")
-        
-        return {'statusCode': 200, 'body': 'Remediation successful.'}
-        
-    except Exception as e:
-        print(f"FATAL ERROR during revocation: {e}")
+    unique = {key(p): p for p in ip_permissions_to_revoke}
+    ip_permissions_to_revoke = list(unique.values())
+
+    try:
+        ec2.revoke_security_group_ingress(GroupId=sg_id, IpPermissions=ip_permissions_to_revoke)
+        print(f"Revoked {len(ip_permissions_to_revoke)} rule(s) on {sg_id}")
+        return {"statusCode": 200, "body": "Remediation successful"}
+    except ClientError as e:
+        # If already removed by a concurrent run, treat as success
+        if e.response["Error"]["Code"] in ("InvalidPermission.NotFound",):
+            print(f"Rules already removed for {sg_id}")
+            return {"statusCode": 200, "body": "Already remediated"}
+        print(f"Revoke failed for {sg_id}: {e}")
         raise
