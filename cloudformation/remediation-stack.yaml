@@ -1,71 +1,141 @@
-# SSH rule
-ConfigRuleSsh:
-  Type: AWS::Config::ConfigRule
-  Properties:
-    ConfigRuleName: Incoming-SSH-Disabled
-    Description: Flags security groups that allow SSH from 0.0.0.0/0 or ::/0.
-    Source:
-      Owner: AWS
-      SourceIdentifier: INCOMING_SSH_DISABLED
-    Scope:
-      ComplianceResourceTypes:
-        - AWS::EC2::SecurityGroup
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Config rules and remediation for SSH/RDP world-open security groups.
 
-# RDP rule
-ConfigRuleRdp:
-  Type: AWS::Config::ConfigRule
-  Properties:
-    ConfigRuleName: Incoming-RDP-Disabled
-    Description: Flags security groups that allow RDP from 0.0.0.0/0 or ::/0.
-    Source:
-      Owner: AWS
-      SourceIdentifier: INCOMING_RDP_DISABLED
-    Scope:
-      ComplianceResourceTypes:
-        - AWS::EC2::SecurityGroup
+Parameters:
+  FunctionName:
+    Type: String
+    Default: ConfigSGRevokerLambda
+    Description: Name of the remediation Lambda function.
 
-# Remediation for SSH
-VpcSgRemediationConfigSsh:
-  Type: AWS::Config::RemediationConfiguration
-  DependsOn: RemediateOpenSgDoc
-  Properties:
-    ConfigRuleName: !Ref ConfigRuleSsh
-    TargetType: SSM_DOCUMENT
-    TargetId: !Ref RemediateOpenSgDoc
-    TargetVersion: "1"
-    Automatic: true
-    MaximumAutomaticAttempts: 1
-    RetryAttemptSeconds: 60
-    Parameters:
-      AutomationAssumeRole:
-        StaticValue:
-          Values: [ !GetAtt AutomationRole.Arn ]
-      SecurityGroupId:
-        ResourceValue:
-          Value: RESOURCE_ID
-      LambdaFnName:
-        StaticValue:
-          Values: [ !Ref FunctionName ]
+Resources:
+  # AWS Managed Config rule for SSH
+  ConfigRuleSsh:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: Incoming-SSH-Disabled
+      Description: Flags security groups that allow SSH from 0.0.0.0/0 or ::/0.
+      Source:
+        Owner: AWS
+        SourceIdentifier: INCOMING_SSH_DISABLED
+      Scope:
+        ComplianceResourceTypes:
+          - AWS::EC2::SecurityGroup
 
-# Remediation for RDP
-VpcSgRemediationConfigRdp:
-  Type: AWS::Config::RemediationConfiguration
-  DependsOn: RemediateOpenSgDoc
-  Properties:
-    ConfigRuleName: !Ref ConfigRuleRdp
-    TargetType: SSM_DOCUMENT
-    TargetId: !Ref RemediateOpenSgDoc
-    TargetVersion: "1"
-    Automatic: true
-    MaximumAutomaticAttempts: 1
-    RetryAttemptSeconds: 60
-    Parameters:
-      AutomationAssumeRole:
-        StaticValue:
-          Values: [ !GetAtt AutomationRole.Arn ]
-      SecurityGroupId:
-        ResourceValue:
-          Value: RESOURCE_ID
-      LambdaFnName:
-        StaticValue:
-          Values: [ !Ref FunctionName ]
+  # AWS Managed Config rule for RDP
+  ConfigRuleRdp:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: Incoming-RDP-Disabled
+      Description: Flags security groups that allow RDP from 0.0.0.0/0 or ::/0.
+      Source:
+        Owner: AWS
+        SourceIdentifier: INCOMING_RDP_DISABLED
+      Scope:
+        ComplianceResourceTypes:
+          - AWS::EC2::SecurityGroup
+
+  # Remediation for SSH rule (reference resources in THIS stack)
+  VpcSgRemediationConfigSsh:
+    Type: AWS::Config::RemediationConfiguration
+    Properties:
+      ConfigRuleName: !Ref ConfigRuleSsh
+      TargetType: SSM_DOCUMENT
+      TargetId: !Ref RemediateOpenSgDoc
+      TargetVersion: "1"
+      Automatic: true
+      MaximumAutomaticAttempts: 1
+      RetryAttemptSeconds: 60
+      Parameters:
+        AutomationAssumeRole:
+          StaticValue:
+            Values: [ !GetAtt AutomationRole.Arn ]
+        SecurityGroupId:
+          ResourceValue:
+            Value: RESOURCE_ID
+        LambdaFnName:
+          StaticValue:
+            Values: [ !Ref FunctionName ]
+
+  # Remediation for RDP rule (reference resources in THIS stack)
+  VpcSgRemediationConfigRdp:
+    Type: AWS::Config::RemediationConfiguration
+    Properties:
+      ConfigRuleName: !Ref ConfigRuleRdp
+      TargetType: SSM_DOCUMENT
+      TargetId: !Ref RemediateOpenSgDoc
+      TargetVersion: "1"
+      Automatic: true
+      MaximumAutomaticAttempts: 1
+      RetryAttemptSeconds: 60
+      Parameters:
+        AutomationAssumeRole:
+          StaticValue:
+            Values: [ !GetAtt AutomationRole.Arn ]
+        SecurityGroupId:
+          ResourceValue:
+            Value: RESOURCE_ID
+        LambdaFnName:
+          StaticValue:
+            Values: [ !Ref FunctionName ]
+
+  # IAM Role used by the SSM Automation Document
+  AutomationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RMF-Auto-SG-AutomationRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ ssm.amazonaws.com ]
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RemediateOpenSgPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSecurityGroups
+                  - ec2:RevokeSecurityGroupIngress
+                  - lambda:InvokeFunction
+                Resource: "*"
+
+  # SSM Automation Document that calls the Lambda
+  RemediateOpenSgDoc:
+    Type: AWS::SSM::Document
+    Properties:
+      DocumentType: Automation
+      Content:
+        description: "Automation document to remediate open SSH/RDP security groups"
+        schemaVersion: "0.3"
+        assumeRole: "{{ AutomationAssumeRole }}"
+        parameters:
+          SecurityGroupId:
+            type: String
+          AutomationAssumeRole:
+            type: String
+          LambdaFnName:
+            type: String
+        mainSteps:
+          - name: InvokeLambda
+            action: aws:invokeLambdaFunction
+            inputs:
+              FunctionName: "{{ LambdaFnName }}"
+              Payload: |
+                { "resourceId": "{{ SecurityGroupId }}" }
+
+# Optional: keep these exports if you want other stacks to import them later.
+Outputs:
+  SsmDocName:
+    Description: Exported SSM Automation Document name
+    Value: !Ref RemediateOpenSgDoc
+    Export:
+      Name: RMF-RemediateOpenSgDoc-Name
+
+  AutomationRoleArn:
+    Description: Exported Automation IAM Role ARN
+    Value: !GetAtt AutomationRole.Arn
+    Export:
+      Name: RMF-AutomationRole-Arn

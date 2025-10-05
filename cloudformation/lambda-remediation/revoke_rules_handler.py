@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     if not sg_id:
         return {"statusCode": 400, "body": "Missing Security Group ID"}
 
-    # Describe SG
+    # Describe the security group
     try:
         resp = ec2.describe_security_groups(GroupIds=[sg_id])
         sg = resp["SecurityGroups"][0]
@@ -29,24 +29,23 @@ def lambda_handler(event, context):
 
     ip_permissions_to_revoke = []
 
+    # Iterate through ingress rules
     for p in sg.get("IpPermissions", []):
         proto = p.get("IpProtocol")
         from_port = p.get("FromPort")
         to_port = p.get("ToPort")
 
-        # Target only 22 and 3389
+        # Target only SSH (22) and RDP (3389), or all traffic (-1)
         is_ssh = (from_port == 22 and to_port == 22)
         is_rdp = (from_port == 3389 and to_port == 3389)
-
-        # Handle rules that allow "all traffic" with IpProtocol = "-1"
         all_traffic = (proto == "-1")
+
         if not (is_ssh or is_rdp or all_traffic):
             continue
 
-        # IPv4 public
+        # IPv4 public rules
         for r in p.get("IpRanges", []):
             if r.get("CidrIp") == "0.0.0.0/0":
-                # If "all traffic", create a precise permission for SSH and RDP
                 if all_traffic:
                     ip_permissions_to_revoke.extend([
                         {"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "IpRanges": [{"CidrIp": "0.0.0.0/0"}]},
@@ -60,7 +59,7 @@ def lambda_handler(event, context):
                         "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                     })
 
-        # IPv6 public
+        # IPv6 public rules
         for r6 in p.get("Ipv6Ranges", []):
             if r6.get("CidrIpv6") == "::/0":
                 if all_traffic:
@@ -76,11 +75,12 @@ def lambda_handler(event, context):
                         "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
                     })
 
+    # No offending rules found
     if not ip_permissions_to_revoke:
         print("No non-compliant rules found")
         return {"statusCode": 200, "body": "Compliant"}
 
-    # Deduplicate permissions to avoid InvalidPermission.Duplicate
+    # Deduplicate permissions to avoid InvalidPermission.Duplicate errors
     def key(p):
         return (
             p["IpProtocol"],
@@ -92,12 +92,13 @@ def lambda_handler(event, context):
     unique = {key(p): p for p in ip_permissions_to_revoke}
     ip_permissions_to_revoke = list(unique.values())
 
+    # Attempt to revoke rules
     try:
         ec2.revoke_security_group_ingress(GroupId=sg_id, IpPermissions=ip_permissions_to_revoke)
         print(f"Revoked {len(ip_permissions_to_revoke)} rule(s) on {sg_id}")
         return {"statusCode": 200, "body": "Remediation successful"}
     except ClientError as e:
-        # If already removed by a concurrent run, treat as success
+        # Gracefully handle already-fixed or missing rules
         if e.response["Error"]["Code"] in ("InvalidPermission.NotFound",):
             print(f"Rules already removed for {sg_id}")
             return {"statusCode": 200, "body": "Already remediated"}
