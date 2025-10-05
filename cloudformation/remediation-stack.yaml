@@ -160,28 +160,32 @@ Resources:
               Payload: |
                 { "resourceId": "{{ SecurityGroupId }}" }
 
-  # 5) Config rules
+  # 5) Config rules (AWS managed: RESTRICTED_INCOMING_TRAFFIC)
   ConfigRuleSsh:
     Type: AWS::Config::ConfigRule
     Properties:
       ConfigRuleName: Incoming-SSH-Disabled
-      Description: Flags SGs that allow SSH from 0.0.0.0/0 or ::/0.
+      Description: Flags SGs that allow SSH (22) from 0.0.0.0/0 or ::/0.
       Source:
         Owner: AWS
-        SourceIdentifier: INCOMING_SSH_DISABLED
+        SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC
       Scope:
         ComplianceResourceTypes: [ AWS::EC2::SecurityGroup ]
+      InputParameters:
+        blockedPorts: '22'
 
   ConfigRuleRdp:
     Type: AWS::Config::ConfigRule
     Properties:
       ConfigRuleName: Incoming-RDP-Disabled
-      Description: Flags SGs that allow RDP from 0.0.0.0/0 or ::/0.
+      Description: Flags SGs that allow RDP (3389) from 0.0.0.0/0 or ::/0.
       Source:
         Owner: AWS
-        SourceIdentifier: INCOMING_RDP_DISABLED
+        SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC
       Scope:
         ComplianceResourceTypes: [ AWS::EC2::SecurityGroup ]
+      InputParameters:
+        blockedPorts: '3389'
 
   # 6) Remediation configs pointing to the same SSM document
   VpcSgRemediationConfigSsh:
