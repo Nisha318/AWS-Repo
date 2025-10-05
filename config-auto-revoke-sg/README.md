@@ -139,18 +139,18 @@ aws cloudformation create-stack \
 ### Initial State: Compliant Environment
 
 **CloudFormation Stack Deployed:**
-![CloudFormation Stack](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/02-cloudformation-final-stack.png)
+![CloudFormation Stack](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/02-cloudformation-final-stack.png)
 
 **AWS Config Dashboard (All Compliant):**
-![Config Dashboard Compliant](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/03-initial-config-dashboard.png)
+![Config Dashboard Compliant](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/03-initial-config-dashboard.png)
 
 **Initial Security Group States (No Inbound Rules):**
 
 *RDP Security Group:*
-![RDP SG Initial](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/04-RDP-SG-Begin.png)
+![RDP SG Initial](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/04-RDP-SG-Begin.png)
 
 *SSH Security Group:*
-![SSH SG Initial](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/05-SSH-SG-Begin.png)
+![SSH SG Initial](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/05-SSH-SG-Begin.png)
 
 ---
 
@@ -159,19 +159,19 @@ aws cloudformation create-stack \
 **Simulated Attack: Opening Ports to 0.0.0.0/0**
 
 *RDP Port Exposed:*
-![RDP Violation](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/06-sg-violation-created-RDP.png)
+![RDP Violation](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/06-sg-violation-created-RDP.png)
 
 *SSH Port Exposed:*
-![SSH Violation](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/07-sg-violation-created-SSH)
+![SSH Violation](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/07-sg-violation-created-SSH)
 
 **Config Rules Triggered (Non-Compliant Status):**
-![Config Non-Compliant](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/08-config-rule-noncompliant.png)
+![Config Non-Compliant](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/08-config-rule-noncompliant.png)
 
 **Non-Compliant Resource Inventory:**
 - `sg-0679685bff76924c8` (SSH Security Group)
 - `sg-08b6df131d94b0ae4` (RDP Security Group)
 
-![Resource Inventory](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/09-config-rule-resource-inventory.png)
+![Resource Inventory](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/09-config-rule-resource-inventory.png)
 
 ---
 
@@ -180,21 +180,21 @@ aws cloudformation create-stack \
 **Lambda Execution Logs (CloudWatch):**
 
 *SSH Rule Revocation:*
-![CloudWatch SSH](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/10-cloudwatch-revoke-SSH.png)
+![CloudWatch SSH](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/10-cloudwatch-revoke-SSH.png)
 
 *RDP Rule Revocation:*
-![CloudWatch RDP](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/11-cloudwatch-revoke-RDP.png)
+![CloudWatch RDP](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/11-cloudwatch-revoke-RDP.png)
 
 **Lambda Invocation Details:**
-![Lambda Invoke 1](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/12-lambda-invoke1.png)
-![Lambda Invoke 2](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/13-lambda-invoke1.png)
+![Lambda Invoke 1](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/12-lambda-invoke1.png)
+![Lambda Invoke 2](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/13-lambda-invoke1.png)
 
 ---
 
 ### Phase 3: Verified Remediation
 
 **Final Security Group State (Rules Revoked):**
-![SSH SG Final State](https://github.com/Nisha318/Nisha318.github.io/blob/master/assets/images/aws/aws-config/13-SSH-SG-endstate.png)
+![SSH SG Final State](https://github.com/Nisha318/AWS-Repo/blob/main/config-auto-revoke-sg/assets/images/13-SSH-SG-endstate.png)
 
 ✅ **Result**: Unauthorized ingress rules automatically removed, security posture restored
 
