@@ -188,14 +188,16 @@ aws cloudformation create-stack \
 
 **Lambda Invocation Details:**
 ![Lambda Invoke 1](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config/12-lambda-invoke1.png)
-![Lambda Invoke 2](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config/13-lambda-invoke1.png)
+![Lambda Invoke 2](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config/13-lambda-invoke2.png)
 
 ---
 
 ### Phase 3: Verified Remediation
 
 **Final Security Group State (Rules Revoked):**
-![SSH SG Final State](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config13-SSH-SG-endstate.png)
+![SSH SG Final State](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config/13-SSH-SG-endstate.png)
+
+![RDP SG Final State](https://raw.githubusercontent.com/Nisha318/AWS-Repo/main/config-auto-revoke-sg/assets/images/aws-config/14-RDP-SG-endstate.png)
 
 ✅ **Result**: Unauthorized ingress rules automatically removed, security posture restored
 
