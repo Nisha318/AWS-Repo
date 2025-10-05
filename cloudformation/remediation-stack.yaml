@@ -160,38 +160,68 @@ Resources:
               Payload: |
                 { "resourceId": "{{ SecurityGroupId }}" }
 
-  # 5) Single Config rule (supported identifier) for SSH and RDP
-  ConfigRuleRestricted:
-    Type: AWS::Config::ConfigRule
-    Properties:
-      ConfigRuleName: Restricted-SSH-RDP
-      Description: Flags SGs that allow 0.0.0.0/0 or ::/0 on ports 22 or 3389.
-      Source:
-        Owner: AWS
-        SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC
-      Scope:
-        ComplianceResourceTypes: [ AWS::EC2::SecurityGroup ]
-      InputParameters:
-        blockedPortList: '22,3389'
+# 5) Config rules
+ConfigRuleSsh:
+  Type: AWS::Config::ConfigRule
+  Properties:
+    ConfigRuleName: Incoming-SSH-Disabled
+    Description: Flags SGs that allow SSH from 0.0.0.0/0 or ::/0.
+    Source:
+      Owner: AWS
+      SourceIdentifier: INCOMING_SSH_DISABLED
+    Scope:
+      ComplianceResourceTypes: [ AWS::EC2::SecurityGroup ]
 
-  # 6) Remediation config pointing to the SSM document
-  VpcSgRemediationConfigRestricted:
-    Type: AWS::Config::RemediationConfiguration
-    Properties:
-      ConfigRuleName: !Ref ConfigRuleRestricted
-      TargetType: SSM_DOCUMENT
-      TargetId: !Ref RemediateOpenSgDoc
-      TargetVersion: "1"
-      Automatic: true
-      MaximumAutomaticAttempts: 1
-      RetryAttemptSeconds: 60
-      Parameters:
-        AutomationAssumeRole:
-          StaticValue:
-            Values: [ !GetAtt AutomationRole.Arn ]
-        SecurityGroupId:
-          ResourceValue:
-            Value: RESOURCE_ID
-        LambdaFnName:
-          StaticValue:
-            Values: [ !Ref FunctionName ]
+ConfigRuleRdp:
+  Type: AWS::Config::ConfigRule
+  Properties:
+    ConfigRuleName: Incoming-RDP-Disabled
+    Description: Flags SGs that allow RDP from 0.0.0.0/0 or ::/0.
+    Source:
+      Owner: AWS
+      SourceIdentifier: INCOMING_RDP_DISABLED
+    Scope:
+      ComplianceResourceTypes: [ AWS::EC2::SecurityGroup ]
+
+# 6) Remediation configs pointing to the same SSM document
+VpcSgRemediationConfigSsh:
+  Type: AWS::Config::RemediationConfiguration
+  Properties:
+    ConfigRuleName: !Ref ConfigRuleSsh
+    TargetType: SSM_DOCUMENT
+    TargetId: !Ref RemediateOpenSgDoc
+    TargetVersion: "1"
+    Automatic: true
+    MaximumAutomaticAttempts: 1
+    RetryAttemptSeconds: 60
+    Parameters:
+      AutomationAssumeRole:
+        StaticValue:
+          Values: [ !GetAtt AutomationRole.Arn ]
+      SecurityGroupId:
+        ResourceValue:
+          Value: RESOURCE_ID
+      LambdaFnName:
+        StaticValue:
+          Values: [ !Ref FunctionName ]
+
+VpcSgRemediationConfigRdp:
+  Type: AWS::Config::RemediationConfiguration
+  Properties:
+    ConfigRuleName: !Ref ConfigRuleRdp
+    TargetType: SSM_DOCUMENT
+    TargetId: !Ref RemediateOpenSgDoc
+    TargetVersion: "1"
+    Automatic: true
+    MaximumAutomaticAttempts: 1
+    RetryAttemptSeconds: 60
+    Parameters:
+      AutomationAssumeRole:
+        StaticValue:
+          Values: [ !GetAtt AutomationRole.Arn ]
+      SecurityGroupId:
+        ResourceValue:
+          Value: RESOURCE_ID
+      LambdaFnName:
+        StaticValue:
+          Values: [ !Ref FunctionName ]
